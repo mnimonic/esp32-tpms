@@ -390,7 +390,7 @@ static void updateDisplay() {
     displayDirty = true;
     lastActivity = millis();                       // dim/off timers start after the splash
   }
-  if (menuActive || scrState == SCR_OFF) return;  // menu owns the screen / display asleep
+  if (menuActive || wifiActive || scrState == SCR_OFF) return;  // menu / WiFi screen / display asleep
                                                    // (when dimmed the screen is still visible)
   bool ageTick = millis() - lastAgeUpdate >= 1000;
   if (ageTick) lastAgeUpdate = millis();
@@ -486,6 +486,9 @@ static void drawMenu() {
     } else if (k == MENU_STALE) {
       tft.print("No signal");
       snprintf(val, sizeof(val), "%um", STALE_MIN[editStale]);
+    } else if (k == MENU_WIFI) {
+      tft.print("WiFi setup");
+      snprintf(val, sizeof(val), "Start");
     } else if (k == MENU_BUZZ) {
       tft.print("Buzzer");
       snprintf(val, sizeof(val), "%s", BUZZ_NAMES[editBuzz]);
@@ -533,6 +536,7 @@ static void drawMenu() {
   const char* help2 = "Hold 1s next/5s SAVE";
   if (menuSel == MENU_PUNIT || (menuSel >= MENU_TUNIT && menuSel <= MENU_COLORS)) help1 = "Click: change";
   if (menuSel == MENU_SAVE)  help1 = "Click: save";
+  if (menuSel == MENU_WIFI)  help1 = "Click: save + WiFi";
   if (menuSel == MENU_RESET) {
     help1 = resetArmed ? "Click: CONFIRM reset" : "Click: reset pairing";
     if (resetArmed) help2 = "Hold 1s: cancel";

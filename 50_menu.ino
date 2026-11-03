@@ -15,10 +15,11 @@ static const int MENU_OFF    = MENU_TUNIT + 8;
 static const int MENU_ROT    = MENU_TUNIT + 9;
 static const int MENU_LAYOUT = MENU_TUNIT + 10;
 static const int MENU_COLORS = MENU_TUNIT + 11;
-static const int MENU_RESET  = MENU_TUNIT + 12;
-static const int MENU_FACTORY= MENU_TUNIT + 13;
-static const int MENU_SAVE   = MENU_TUNIT + 14;
-static const int MENU_ITEMS  = MENU_TUNIT + 15;
+static const int MENU_WIFI   = MENU_TUNIT + 12;   // action: save menu + start WiFi settings page
+static const int MENU_RESET  = MENU_TUNIT + 13;
+static const int MENU_FACTORY= MENU_TUNIT + 14;
+static const int MENU_SAVE   = MENU_TUNIT + 15;
+static const int MENU_ITEMS  = MENU_TUNIT + 16;
 static const int MENU_VISIBLE = 11;    // rows that fit on screen; the list scrolls
 static bool      menuActive = false;
 static bool      resetArmed = false;   // RESET PAIRING / FACTORY RESET need a second click to confirm
@@ -140,6 +141,7 @@ static void factoryReset() {
 static void menuClick() {
   menuLastInput = millis();
   if (menuSel == MENU_SAVE) { closeMenu(true); return; }
+  if (menuSel == MENU_WIFI) { closeMenu(true); wifiStart(); return; }   // keeps the menu changes
   if (menuSel == MENU_FACTORY) {
     if (!resetArmed) {                 // first click: ask for confirmation
       resetArmed = true;
@@ -221,8 +223,9 @@ static void handleButton() {
       }
     } else if (!holdDone) {                           // released before any hold action
       buzzerClick();
-      if (menuActive) menuClick();
-      else            onShortPress();
+      if (wifiActive)      wifiStop();                 // WiFi screen: click = stop WiFi
+      else if (menuActive) menuClick();
+      else                 onShortPress();
     }
   }
 
@@ -231,7 +234,7 @@ static void handleButton() {
     if (!holdDone && menuActive && held >= MENU_HOLD_MS) {          // menu: hold 1 s = next item
       holdDone = true;
       menuNext();
-    } else if (!holdDone && !menuActive && held >= MENU_OPEN_MS) {  // normal: long press = open menu
+    } else if (!holdDone && !menuActive && !wifiActive && held >= MENU_OPEN_MS) {  // normal: long press = open menu
       holdDone = true;
       openMenu();
     }

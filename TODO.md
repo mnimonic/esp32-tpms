@@ -1,6 +1,6 @@
 # ESP-TPMS – To do
 
-Current firmware: **v0.0.21**. Items are grouped by area and roughly ordered by value within each group.
+Current firmware: **v0.1.0**. Items are grouped by area and roughly ordered by value within each group.
 
 ## 1. Verify before riding
 - [ ] **Check pressure readings against a gauge or the phone app** with sensors mounted. The `(raw − 145) / 10` psi formula comes from one source and has only been checked at about 0 psi.
@@ -12,7 +12,7 @@ Current firmware: **v0.0.21**. Items are grouped by area and roughly ordered by 
 - [x] **Rapid pressure loss alert:** warn when pressure drops faster than, for example, 0.2 bar in 5 minutes, even while still above MIN. This catches a puncture early.
 - [x] **Sensor low-battery warning:** show a battery icon or orange text when voltage is under about 2.7 V. The CR1632 cell lasts about 1–2 years.
 - [x] **High temperature alarm:** a configurable MAX temperature, for example 80 °C.
-- [ ] **Buzzer or LED output** on a free GPIO (GPIO 0, 2 or 21) for alerts, so you don't need to watch the screen.
+- [x] **Buzzer output** (code ready on GPIO 0; connect a buzzer and test) – was: **Buzzer or LED output** on a free GPIO (GPIO 0, 2 or 21) for alerts, so you don't need to watch the screen.
 - [ ] **Decode the status byte.** Values seen so far are `0x00`, `0x28`, `0x40` and `0x80`. They probably mean motion, low battery or leak; log them alongside events to find out.
 - [x] **Configurable "NO SIGNAL" time** (currently fixed at 15 minutes).
 
@@ -31,7 +31,7 @@ The device is powered from an **ignition-switched** supply, so it only runs whil
 - [ ] **Automatic light sleep** between scan windows (optional, low priority with switched power). This needs ESP-IDF power-management settings, which the stock Arduino core does not enable.
 
 ## 5. Connectivity (optional)
-- [ ] **WiFi page for the phone:** settings and a live view, as an easier way to set limits than the button.
+- [x] **WiFi page for the phone:** settings and a live view, as an easier way to set limits than the button.
 - [ ] **OTA firmware updates** over WiFi, so the board can stay mounted.
 - [ ] **Data log:** keep min/max pressure and temperature per ride, viewable in the menu or on the WiFi page.
 
@@ -45,7 +45,7 @@ The device is powered from an **ignition-switched** supply, so it only runs whil
 - [x] **git init**, first commit, push to GitHub: https://github.com/mnimonic/esp32-tpms (public). Still open: remove the personal path from `CLAUDE.md`, decide about the CFMOTO logo in the public repo, delete the duplicate `mnimonic/ESP-TPMS` repo.
 - [x] **Add a LICENSE** (MIT). Still open: **photos and a screenshot** in the README.
 - [x] **GitHub Actions:** compile the sketch on every push with arduino-cli.
-- [ ] **Split the sketch** into several files (`decoders.h`, `display.h`, `menu.h`, `button.h`). It is now about 1000 lines.
+- [x] **Split the sketch** into several files (`decoders.h`, `display.h`, `menu.h`, `button.h`). It is now about 1000 lines.
 - [ ] **Unit tests for the decoders** using the captured payloads (e.g. `40 1D 1D 00 92 15 A9`).
 - [x] **Watchdog timer**, so the board restarts if it ever hangs.
 - [x] **Remove or hide debug output** (raw dumps, "slowest loop") behind a `DEBUG` flag for release builds.

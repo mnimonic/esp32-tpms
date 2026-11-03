@@ -27,6 +27,9 @@
 #include <NimBLEDevice.h>
 #include <Preferences.h>
 #include <esp_task_wdt.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include "web_page.h"         // settings page HTML
 #include <esp_system.h>
 
 // ---------------- Watchdog ----------------
@@ -52,7 +55,7 @@ static bool     splashActive = false;
 static uint32_t splashStart  = 0;
 
 // ---------------- Version ----------------
-#define FW_VERSION "0.0.22"     // shown in the settings menu, on the start screen and in the serial log
+#define FW_VERSION "0.1.0"     // shown in the settings menu, on the start screen and in the serial log
 
 // Verbose serial output (every reading, 30 s status, screen dim/off). 0 = release.
 // Can also be set when building: --build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1
@@ -223,6 +226,22 @@ static const char* BUZZ_NAMES[] = {"Off", "Alerts", "Alert+clk"};
 static const int   NUM_BUZZ = 3;
 static int         buzzIdx  = BUZZ_ALERTS;        // menu: Buzzer
 
+// ---------------- WiFi settings page ----------------
+// Optional secrets.h (git-ignored) can override:  #define WIFI_AP_PASS "your-password"
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+#ifndef WIFI_AP_SSID
+#define WIFI_AP_SSID "ESP-TPMS"
+#endif
+#ifndef WIFI_AP_PASS
+#define WIFI_AP_PASS "tpms1234"          // at least 8 characters
+#endif
+static const uint32_t WIFI_IDLE_OFF_MS = 10UL * 60UL * 1000UL;   // WiFi off after 10 min without page use
+static WebServer web(80);
+static bool      wifiActive  = false;
+static uint32_t  wifiLastUse = 0;
+
 // ---------------- Current look (used by the display tab) ----------------
 // Note: the main file must contain a function after the data types above;
 // Arduino inserts the generated prototypes of ALL tabs before it.
@@ -239,6 +258,7 @@ static Layout         L() { return (Layout)layoutIdx; }       // current layout
 //   60_readings.ino    Reading handling
 //   70_display.ino     Display
 //   80_screen.ino      Backlight / screen sleep
+//   85_wifi.ino        WiFi settings page
 //   90_system.ino      Watchdog / reset reason
 //   99_setup_loop.ino  Setup / loop
 

@@ -23,6 +23,8 @@ Inspired by [ra6070/BLE-TPMS](https://github.com/ra6070/BLE-TPMS).
 - Pairing, limits and unit are kept in flash and survive power loss
 - Power options: CPU at 80 MHz, BLE scan duty cycle, backlight brightness and screen-off timer
 - Boot splash with a logo for 10 s (a click skips it)
+- **WiFi settings page** on your phone (the board becomes a hotspot on demand)
+- Optional **buzzer** for alerts
 - Watchdog: if the program ever hangs, the board restarts by itself within 10 s (the splash then shows "restarted: watchdog"; crashes and low-voltage resets are shown too)
 - Serial log at 115200 baud for debugging
 
@@ -55,6 +57,13 @@ Inspired by [ra6070/BLE-TPMS](https://github.com/ra6070/BLE-TPMS).
 
 No resistor is needed for the button because the internal pull-up is used.
 
+| Buzzer (optional) | ESP32-C3 SuperMini |
+|---|---|
+| + (or module I/O) | GPIO 0 |
+| − | GND |
+
+An **active** buzzer is assumed. For a **passive** buzzer set `BUZZER_PASSIVE = true`, for a module that beeps when its input is LOW set `BUZZER_ACTIVE_LOW = true`, and with no buzzer set `BUZZER_PIN = -1` (top of `ESP-TPMS.ino`). A bare buzzer drawing more than ~20 mA needs a small NPN transistor; 3-pin buzzer modules already have one.
+
 ```
                  ESP32-C3 SuperMini
                ┌───────────────────┐
@@ -82,6 +91,7 @@ If you move the TFT pins, change `TFT_SCK`, `TFT_MOSI`, `TFT_CS`, `TFT_DC`, `TFT
 |---|---|---|
 | Normal screen | Click | While pairing: store the detected sensor. When paired: next layout |
 | Normal screen | Long press (1.5 s) | Open the **SETTINGS** menu |
+| WiFi screen | Click | Switch WiFi off |
 | Settings | Click | Increase the selected value by 0.1 bar or 1 psi (wraps around at the top), or step through the other options |
 | Settings | Hold 1 s | Next item |
 | Settings | Hold 5 s | **Save & exit** |
@@ -143,6 +153,33 @@ The main screen has two independent settings, so any layout works with any colou
 | **Green LCD** | Green on black |
 | **Amber** | Amber on black – low glare at night |
 
+### WiFi settings page
+
+Change every setting from your phone instead of the button:
+
+1. **Menu → WiFi setup → click.** Changes made in the menu are saved, then the board starts a WiFi hotspot and the screen shows how to connect.
+2. On the phone, join the WiFi network **`ESP-TPMS`** (password **`tpms1234`**) and open **http://192.168.4.1**.
+3. The page shows live cards for both wheels (updated every 2 s) and all settings: units, MIN/MAX, alarms, buzzer, layout, colours, brightness, dim, screen-off and BLE scan. Tap **Save settings**. Reset pairing and factory reset are there too (with confirmation).
+4. **Click the button** to switch WiFi off. It also switches off by itself after 10 minutes without the page being used. BLE keeps receiving the whole time.
+
+To use your own password, create `secrets.h` next to the sketch (it is git-ignored):
+
+```cpp
+#define WIFI_AP_PASS "my-password"   // at least 8 characters
+// #define WIFI_AP_SSID "My-TPMS"    // optional
+```
+
+### Buzzer (optional)
+
+| Event | Sound |
+|---|---|
+| Wheel goes LOW or HIGH | 2 short beeps |
+| DROPPING! or HOT! | 3 long beeps |
+| While the alert number blinks (first 5 min) | repeated every 60 s |
+| Start-up | one short chirp (confirms the buzzer works) |
+
+**Menu → Buzzer:** Off / Alerts / Alert+clk (also a short tick on every button press). Selecting it plays a test beep.
+
 ### Pairing sensors
 
 1. Open the menu (long press), go to **RESET PAIRING** and click twice. Skip this on a new board.
@@ -187,12 +224,13 @@ git clone https://github.com/mnimonic/esp32-tpms.git ESP-TPMS
    - **Adafruit GFX Library**
 4. **Tools → Board → ESP32C3 Dev Module**
 5. **Tools → USB CDC On Boot → Enabled.** Without this the serial monitor stays empty on the SuperMini.
-6. Upload, then open the serial monitor at 115200 baud.
+6. **Tools → Partition Scheme → Minimal SPIFFS (1.9MB APP with OTA).** The firmware (with WiFi) is larger than the default 1.2 MB app partition.
+7. Upload, then open the serial monitor at 115200 baud.
 
 ### arduino-cli
 
 ```sh
-arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc" .
+arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=min_spiffs" .
 ```
 
 ### Display variant
@@ -204,6 +242,26 @@ If the screen shows wrong colours or a band of random pixels along an edge, chan
 ```
 
 The module used here has a **green** tab but needs `INITR_BLACKTAB`.
+
+## Code structure
+
+| File | Contents |
+|---|---|
+| `ESP-TPMS.ino` | Pins, settings, data types and global variables |
+| `10_ble.ino` | Sensor decoders and BLE scanning |
+| `20_storage.ino` | Pairing and settings in flash |
+| `30_alerts.ino` | Rapid pressure loss, low battery |
+| `35_buzzer.ino` | Buzzer patterns |
+| `40_pairing.ino` | Storing sensors with the button |
+| `50_menu.ino` | Settings menu and button handling |
+| `60_readings.ino` | Processing incoming readings |
+| `70_display.ino` | Main screen layouts, menu drawing, splash |
+| `80_screen.ino` | Backlight, dim and screen-off |
+| `85_wifi.ino` + `web_page.h` | WiFi hotspot and settings page |
+| `90_system.ino` | Watchdog and reset reason |
+| `99_setup_loop.ino` | `setup()` and `loop()` |
+
+Arduino compiles `ESP-TPMS.ino` first and then the other tabs in alphabetical order, hence the numbers.
 
 ## Sensor protocols
 

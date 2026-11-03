@@ -31,7 +31,7 @@ static void manageScreen() {
   if (TFT_BL < 0) return;              // no backlight control: always on
 
   // Splash, menu open or an unpaired sensor waiting to be stored: keep the screen on
-  bool attention = splashActive || menuActive || (nextFreePosition() >= 0 && haveCandidate());
+  bool attention = splashActive || menuActive || wifiActive || (nextFreePosition() >= 0 && haveCandidate());
 
   // Alerts (a wheel red/blue):
   //  - wake the screen when they start,

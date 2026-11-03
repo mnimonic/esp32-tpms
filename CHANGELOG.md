@@ -2,6 +2,11 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.0
+- **WiFi settings page:** Menu → WiFi setup starts a hotspot (`ESP-TPMS` / `tpms1234`); http://192.168.4.1 shows live readings and every setting, plus reset pairing and factory reset. Click or 10 min idle switches WiFi off. Password can be set in a git-ignored `secrets.h`.
+- Partition scheme **Minimal SPIFFS (1.9 MB app)** is now required (the firmware is 1.34 MB).
+- Debug builds accept the serial commands `wifi` / `wifioff`.
+
 ## 0.0.22
 - Buzzer support (GPIO 0): 2 short beeps for LOW / HIGH, 3 long beeps for DROPPING / HOT, repeated every 60 s while the number blinks; menu item Buzzer (Off / Alerts / Alerts+click) with test beep; start-up chirp.
 - Sketch split into tabs (no functional change).

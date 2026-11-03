@@ -1,6 +1,6 @@
 # ESP-TPMS – notes for Claude
 
-Arduino sketch `ESP-TPMS.ino` (+ `logo.h`): BLE TPMS monitor for a motorcycle (Front/Back) on an ESP32-C3 SuperMini with a 1.8" ST7735 TFT and one button. Current firmware **v0.0.21** (`FW_VERSION`).
+Arduino sketch split into tabs: `ESP-TPMS.ino` (pins, settings, types, globals) + `10_ble` … `99_setup_loop.ino` + `web_page.h` + `logo.h` (public neutral logo; local git-ignored `logo_custom.h` wins): BLE TPMS monitor for a motorcycle (Front/Back) on an ESP32-C3 SuperMini with a 1.8" ST7735 TFT and one button. Current firmware **v0.1.0** (`FW_VERSION`).
 
 Other files: `README.md` (user docs, wiring – keep in sync when pins, buttons or settings change), `TODO.md` (backlog – tick items when done, update the "Current firmware" line), `tools/img2bitmap.py` (image → `logo.h`).
 
@@ -11,7 +11,8 @@ Other files: `README.md` (user docs, wiring – keep in sync when pins, buttons 
 
 ## Build / upload / serial
 - Bundled CLI: `%LOCALAPPDATA%\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe`
-- `arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc" C:\Projects\ESP-TPMS`
+- `arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=min_spiffs" C:\Projects\ESP-TPMS`
+- **PartitionScheme=min_spiffs is required** since v0.1.0 (WiFi → 1.34 MB; default app partition is 1.31 MB). NVS offset is the same, settings survive. Keep CI (`.github/workflows/build.yml`) in sync.
 - **CDCOnBoot=cdc is required** – without it Serial goes to the UART pins and the monitor is silent.
 - Read serial from PowerShell with `System.IO.Ports.SerialPort` on COM6 (`DtrEnable = $true`). "Access denied" = Arduino IDE serial monitor is open; "does not exist" = board unplugged. COM3/COM4 are Bluetooth ports.
 - When editing the .ino from PowerShell, write UTF-8 **without BOM** (`[IO.File]::WriteAllText(..., New UTF8Encoding($false))`).
@@ -45,3 +46,7 @@ Other files: `README.md` (user docs, wiring – keep in sync when pins, buttons 
 - **Aged reading**: an OK reading older than AGED_MS (2 min) draws number + unit in the palette's dim colour (numberColor()); alerts keep their colour; updateDisplay redraws on the aged transition.
 - **Watchdog**: task WDT on the loop task, WDT_TIMEOUT_MS = 10 s (esp_task_wdt_reconfigure/init + add(NULL), fed at the top of loop()). Reset reason logged at boot ("Last reset: ..."); watchdog / crash / brownout also shown in red on the splash. Verified with a `-DWDT_TEST` build (hangs after 20 s → `Last reset: watchdog`). Keep blocking pauses (message screens) well under 10 s.
 - **Architecture**: BLE callback only decodes and pushes `Reading` into a FreeRTOS queue; all printing/drawing happens in `loop()`.
+- **Tabs**: Arduino concatenates the main .ino first, then tabs alphabetically (hence numbers). New globals go in `ESP-TPMS.ino` (above the `T()`/`L()` functions) so every tab sees them. The main file **must contain a function after the types** (`T()`/`L()`): with several tabs the generated prototypes are inserted before the first function of the main file. No default arguments in functions (prototypes repeat them → error).
+- **Buzzer** (`35_buzzer.ino`): BUZZER_PIN 0 (-1 = none), active by default (BUZZER_PASSIVE / BUZZER_ACTIVE_LOW flags); non-blocking patterns; new alert → 2 short (LOW/HIGH) or 3 long (DROP/HOT), repeated every 60 s while blinking; start-up chirp; menu Buzzer Off/Alerts/Alert+clk (pref `buzz`) with test beep. Not yet tested with real hardware.
+- **WiFi** (`85_wifi.ino`, `web_page.h`): menu item "WiFi setup" saves the menu and starts a softAP (WIFI_AP_SSID/WIFI_AP_PASS, override in git-ignored `secrets.h`) + WebServer on 192.168.4.1: `/` page, `/api/config`, `/api/status` (2 s poll), POST `/api/settings` (validates MIN<MAX within range, then saveLimits + apply), `/api/reset_pairing`, `/api/factory_reset`. Click or 10 min idle → off. While on: WiFi screen, menu/long-press disabled, screen kept on. Debug builds: serial `wifi` / `wifioff`. Verified: AP starts and is visible; the page itself has not been tested from a phone yet. Never connect the PC to the AP for testing (it would drop the user's internet).
+- **Repo**: https://github.com/mnimonic/esp32-tpms (public, MIT). Commit + push after each step; tags `vX.Y.Z` for released firmware. CHANGELOG.md is maintained per version.

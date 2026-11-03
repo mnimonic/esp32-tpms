@@ -59,6 +59,16 @@ void loop() {
   processReadings();
   handleButton();
   buzzerUpdate();
+  wifiLoop();
+#if TPMS_DEBUG
+  // Debug serial commands: "wifi" / "wifioff" (start/stop the settings page without the button)
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd == "wifi")    wifiStart();
+    if (cmd == "wifioff") wifiStop();
+  }
+#endif
   buzzerReminder();
   updateAlerts();
   manageScreen();
