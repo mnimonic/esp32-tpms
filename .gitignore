@@ -1,0 +1,36 @@
+# --- Build output (arduino-cli / Arduino IDE / PlatformIO) ---
+build/
+.build/
+*.bin
+*.elf
+*.map
+*.hex
+.pio/
+
+# --- Editors / IDEs ---
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*~
+
+# --- Operating system ---
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- Python (tools/) ---
+__pycache__/
+*.pyc
+.venv/
+
+# --- Backups / temporary files ---
+*.bak
+*.orig
+*.tmp
+
+# --- Local secrets (e.g. future WiFi credentials) ---
+secrets.h
+
+# --- Claude Code local settings ---
+.claude/settings.local.json
