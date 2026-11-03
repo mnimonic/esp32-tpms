@@ -6,24 +6,25 @@ static const int MENU_LIM0   = 1;                        // first MIN/MAX item: 
 static const int MENU_TUNIT  = MENU_LIM0 + NUM_POSITIONS * 2;   // C / F
 static const int MENU_TMAX   = MENU_TUNIT + 1;
 static const int MENU_STALE  = MENU_TUNIT + 2;
-static const int MENU_SCAN   = MENU_TUNIT + 3;
-static const int MENU_BRIGHT = MENU_TUNIT + 4;
-static const int MENU_DIM    = MENU_TUNIT + 5;
-static const int MENU_DIMLVL = MENU_TUNIT + 6;
-static const int MENU_OFF    = MENU_TUNIT + 7;
-static const int MENU_ROT    = MENU_TUNIT + 8;
-static const int MENU_LAYOUT = MENU_TUNIT + 9;
-static const int MENU_COLORS = MENU_TUNIT + 10;
-static const int MENU_RESET  = MENU_TUNIT + 11;
-static const int MENU_FACTORY= MENU_TUNIT + 12;
-static const int MENU_SAVE   = MENU_TUNIT + 13;
-static const int MENU_ITEMS  = MENU_TUNIT + 14;
+static const int MENU_BUZZ   = MENU_TUNIT + 3;
+static const int MENU_SCAN   = MENU_TUNIT + 4;
+static const int MENU_BRIGHT = MENU_TUNIT + 5;
+static const int MENU_DIM    = MENU_TUNIT + 6;
+static const int MENU_DIMLVL = MENU_TUNIT + 7;
+static const int MENU_OFF    = MENU_TUNIT + 8;
+static const int MENU_ROT    = MENU_TUNIT + 9;
+static const int MENU_LAYOUT = MENU_TUNIT + 10;
+static const int MENU_COLORS = MENU_TUNIT + 11;
+static const int MENU_RESET  = MENU_TUNIT + 12;
+static const int MENU_FACTORY= MENU_TUNIT + 13;
+static const int MENU_SAVE   = MENU_TUNIT + 14;
+static const int MENU_ITEMS  = MENU_TUNIT + 15;
 static const int MENU_VISIBLE = 11;    // rows that fit on screen; the list scrolls
 static bool      menuActive = false;
 static bool      resetArmed = false;   // RESET PAIRING / FACTORY RESET need a second click to confirm
 static int       menuSel = 0;
 static float     editMin[NUM_POSITIONS], editMax[NUM_POSITIONS];
-static int       editScan, editBright, editDim, editDimLvl, editOff, editStale, editTmax;
+static int       editScan, editBright, editDim, editDimLvl, editOff, editStale, editTmax, editBuzz;
 static bool      editFahrenheit, editRotate;
 static int       editLayout, editPalette;
 static bool      savedPsi;            // unit before the menu opened (restored if not saved)
@@ -54,6 +55,7 @@ static void openMenu() {
   editOff    = screenOffIdx;
   editStale  = staleIdx;
   editTmax   = tmaxIdx;
+  editBuzz   = buzzIdx;
   editFahrenheit = useFahrenheit;
   savedPsi   = usePsi;
   editRotate = rotate180;
@@ -81,6 +83,7 @@ static void closeMenu(bool save) {
     screenOffIdx = editOff;
     staleIdx     = editStale;
     tmaxIdx      = editTmax;
+    buzzIdx      = editBuzz;
     useFahrenheit = editFahrenheit;
     rotate180    = editRotate;
     layoutIdx    = editLayout;
@@ -169,6 +172,8 @@ static void menuClick() {
   else if (menuSel == MENU_OFF)    editOff = (editOff + 1) % NUM_OPTS;
   else if (menuSel == MENU_STALE)  editStale = (editStale + 1) % NUM_STALE;
   else if (menuSel == MENU_TMAX)   editTmax = (editTmax + 1) % NUM_TMAX;
+  else if (menuSel == MENU_BUZZ)   { editBuzz = (editBuzz + 1) % NUM_BUZZ;          // test beep
+                                     if (editBuzz != BUZZ_OFF) buzzerPlay(PAT_TEST, 3, true); }
   else if (menuSel == MENU_TUNIT)  editFahrenheit = !editFahrenheit;
   else if (menuSel == MENU_PUNIT)  usePsi = !usePsi;   // preview: menu values switch unit
   else if (menuSel == MENU_LAYOUT) editLayout = (editLayout + 1) % NUM_LAYOUTS;
@@ -215,6 +220,7 @@ static void handleButton() {
         holdDone = true;
       }
     } else if (!holdDone) {                           // released before any hold action
+      buzzerClick();
       if (menuActive) menuClick();
       else            onShortPress();
     }

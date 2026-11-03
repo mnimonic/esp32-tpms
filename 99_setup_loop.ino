@@ -19,6 +19,8 @@ void setup() {
 
   loadPositions();
   setBacklightPct(BRIGHT_PCT[brightIdx]);
+  buzzerInit();
+  BUZZ(PAT_CHIRP);                               // short start-up chirp = buzzer works
   if (rotate180) { applyRotation(true); drawSplash(); }   // redraw splash upside down
   lastActivity = millis();
   Serial.printf("CPU %lu MHz, scan %u%%, brightness %u%%, dim %us to %u%%, screen off %us\n",
@@ -56,6 +58,8 @@ void loop() {
 #endif
   processReadings();
   handleButton();
+  buzzerUpdate();
+  buzzerReminder();
   updateAlerts();
   manageScreen();
   updateDisplay();

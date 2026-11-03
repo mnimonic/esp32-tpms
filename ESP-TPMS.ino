@@ -52,7 +52,7 @@ static bool     splashActive = false;
 static uint32_t splashStart  = 0;
 
 // ---------------- Version ----------------
-#define FW_VERSION "0.0.21"     // shown in the settings menu, on the start screen and in the serial log
+#define FW_VERSION "0.0.22"     // shown in the settings menu, on the start screen and in the serial log
 
 // Verbose serial output (every reading, 30 s status, screen dim/off). 0 = release.
 // Can also be set when building: --build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1
@@ -210,6 +210,19 @@ static QueueHandle_t readingQueue;
 static Preferences  prefs;
 static volatile uint32_t advCount = 0;
 
+// ---------------- Buzzer (optional) ----------------
+// Wiring: buzzer + to BUZZER_PIN, - to GND (use a transistor for a bare buzzer > 20 mA;
+// 3-pin buzzer modules already have one). BUZZER_PIN -1 = no buzzer.
+static const int      BUZZER_PIN        = 0;
+static const bool     BUZZER_PASSIVE    = false;  // true = passive buzzer (needs a tone)
+static const bool     BUZZER_ACTIVE_LOW = false;  // true = module beeps when the pin is LOW
+static const uint32_t BUZZER_TONE_HZ    = 2700;   // tone for a passive buzzer
+static const uint32_t BUZZ_REPEAT_MS    = 60000;  // repeat alert sound while the number blinks
+enum BuzzMode { BUZZ_OFF, BUZZ_ALERTS, BUZZ_ALERTS_CLICK };
+static const char* BUZZ_NAMES[] = {"Off", "Alerts", "Alert+clk"};
+static const int   NUM_BUZZ = 3;
+static int         buzzIdx  = BUZZ_ALERTS;        // menu: Buzzer
+
 // ---------------- Current look (used by the display tab) ----------------
 // Note: the main file must contain a function after the data types above;
 // Arduino inserts the generated prototypes of ALL tabs before it.
@@ -220,6 +233,7 @@ static Layout         L() { return (Layout)layoutIdx; }       // current layout
 //   10_ble.ino         Decoders
 //   20_storage.ino     Positions (stored in flash)
 //   30_alerts.ino      Rapid pressure loss / battery
+//   35_buzzer.ino      Buzzer patterns
 //   40_pairing.ino     Button actions
 //   50_menu.ino        Settings menu (MIN/MAX per position)
 //   60_readings.ino    Reading handling

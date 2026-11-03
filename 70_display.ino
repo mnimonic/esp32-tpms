@@ -145,6 +145,7 @@ static void updateAlerts() {
       alertSince[i] = millis() | 1;
       alertStarted[i] = true;
       alertKind[i] = st;
+      buzzerAlert(st);                 // sound the new alert
     }
     if (!alert) alertSince[i] = 0;
   }
@@ -485,6 +486,9 @@ static void drawMenu() {
     } else if (k == MENU_STALE) {
       tft.print("No signal");
       snprintf(val, sizeof(val), "%um", STALE_MIN[editStale]);
+    } else if (k == MENU_BUZZ) {
+      tft.print("Buzzer");
+      snprintf(val, sizeof(val), "%s", BUZZ_NAMES[editBuzz]);
     } else if (k == MENU_TMAX) {
       tft.print("Max temp");
       if (!TMAX_C[editTmax])  snprintf(val, sizeof(val), "Off");

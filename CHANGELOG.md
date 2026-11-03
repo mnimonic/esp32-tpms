@@ -2,7 +2,9 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
-## Unreleased
+## 0.0.22
+- Buzzer support (GPIO 0): 2 short beeps for LOW / HIGH, 3 long beeps for DROPPING / HOT, repeated every 60 s while the number blinks; menu item Buzzer (Off / Alerts / Alerts+click) with test beep; start-up chirp.
+- Sketch split into tabs (no functional change).
 - Neutral default splash logo (TPMS warning symbol); a local, git-ignored `logo_custom.h` is used instead when present.
 - MIT license, this changelog, GitHub Actions compile check.
 

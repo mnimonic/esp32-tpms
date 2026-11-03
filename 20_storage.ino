@@ -16,6 +16,7 @@ static void loadPositions() {
   dimLvlIdx    = prefs.getUChar("diml", DEFAULT_DIM_LVL_IDX) % NUM_DIM_LVLS;
   staleIdx     = prefs.getUChar("stale", DEFAULT_STALE_IDX) % NUM_STALE;
   tmaxIdx      = prefs.getUChar("tmax", DEFAULT_TMAX_IDX)   % NUM_TMAX;
+  buzzIdx      = prefs.getUChar("buzz", BUZZ_ALERTS)        % NUM_BUZZ;
   useFahrenheit = prefs.getBool("degf", false);
   rotate180     = prefs.getBool("rot", false);
   layoutIdx     = prefs.getUChar("layout", 0) % NUM_LAYOUTS;
@@ -38,6 +39,7 @@ static void saveLimits() {
   prefs.putUChar("diml", dimLvlIdx);
   prefs.putUChar("stale", staleIdx);
   prefs.putUChar("tmax", tmaxIdx);
+  prefs.putUChar("buzz", buzzIdx);
   prefs.putBool("degf", useFahrenheit);
   prefs.putBool("rot", rotate180);
   prefs.putUChar("layout", layoutIdx);
