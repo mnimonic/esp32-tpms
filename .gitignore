@@ -29,8 +29,13 @@ __pycache__/
 *.orig
 *.tmp
 
-# --- Local secrets (e.g. future WiFi credentials) ---
+# --- Local secrets (e.g. WiFi password) ---
 secrets.h
+
+# --- Personal splash logo (trademarked images stay local; logo.h is the public default) ---
+logo_custom.h
+*-logo-png_*.png
+tools/default_logo.png
 
 # --- Claude Code local settings ---
 .claude/settings.local.json

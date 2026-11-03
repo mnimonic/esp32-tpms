@@ -10,7 +10,7 @@ Other files: `README.md` (user docs, wiring – keep in sync when pins, buttons 
 - Keep `README.md`, `CLAUDE.md` and `TODO.md` updated with each feature.
 
 ## Build / upload / serial
-- Bundled CLI: `C:\Users\georg\AppData\Local\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe`
+- Bundled CLI: `%LOCALAPPDATA%\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe`
 - `arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc" C:\Projects\ESP-TPMS`
 - **CDCOnBoot=cdc is required** – without it Serial goes to the UART pins and the monitor is silent.
 - Read serial from PowerShell with `System.IO.Ports.SerialPort` on COM6 (`DtrEnable = $true`). "Access denied" = Arduino IDE serial monitor is open; "does not exist" = board unplugged. COM3/COM4 are Bluetooth ports.

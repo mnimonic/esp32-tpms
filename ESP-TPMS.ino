@@ -39,7 +39,13 @@ static const uint32_t WDT_TIMEOUT_MS = 10000;
 #include <Fonts/FreeSansBold24pt7b.h>   // large pressure number (Classic, Minimal)
 #include <Fonts/FreeSansBold18pt7b.h>   // Detail layout
 #include <Fonts/FreeMonoBold18pt7b.h>   // Retro layout
-#include "logo.h"                  // boot splash bitmap (LOGO_W x LOGO_H, 1 bit per pixel)
+// Boot splash bitmap (LOGO_W x LOGO_H, 1 bit per pixel). A local, git-ignored
+// logo_custom.h (your own logo) takes priority over the neutral default logo.h.
+#if __has_include("logo_custom.h")
+#include "logo_custom.h"
+#else
+#include "logo.h"
+#endif
 
 static const uint32_t SPLASH_MS = 10000;   // boot splash duration (a click skips it)
 static bool     splashActive = false;

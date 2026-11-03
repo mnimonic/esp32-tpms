@@ -42,7 +42,7 @@ The device is powered from an **ignition-switched** supply, so it only runs whil
 - [ ] **Antenna check:** SuperMini boards have a weak chip antenna. Check RSSI from both wheels when mounted (the rear is usually the hardest).
 
 ## 7. Code and project
-- [ ] **git init**, first commit, push to GitHub. Remove the personal path from `CLAUDE.md` first.
+- [x] **git init**, first commit, push to GitHub: https://github.com/mnimonic/esp32-tpms (public). Still open: remove the personal path from `CLAUDE.md`, decide about the CFMOTO logo in the public repo, delete the duplicate `mnimonic/ESP-TPMS` repo.
 - [ ] **Add a LICENSE** (e.g. MIT) and **photos and a screenshot** to the README.
 - [ ] **GitHub Actions:** compile the sketch on every push with arduino-cli.
 - [ ] **Split the sketch** into several files (`decoders.h`, `display.h`, `menu.h`, `button.h`). It is now about 1000 lines.
