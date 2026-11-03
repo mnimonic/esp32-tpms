@@ -1,0 +1,50 @@
+# Compiles the sketch on every push and pull request (release and debug builds).
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ESP-TPMS            # sketch folder name must match ESP-TPMS.ino
+
+      - name: Cache Arduino data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+            ~/Arduino/libraries
+          key: arduino-esp32-3.3.12-v1
+
+      - name: Set up arduino-cli
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 core
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.12
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "NimBLE-Arduino@2.5.2"
+          arduino-cli lib install "Adafruit BusIO@1.17.4"
+          arduino-cli lib install "Adafruit GFX Library@1.13.0"
+          arduino-cli lib install "Adafruit ST7735 and ST7789 Library@1.12.0"
+
+      - name: Compile (release)
+        run: arduino-cli compile -b "esp32:esp32:esp32c3:CDCOnBoot=cdc" ESP-TPMS
+
+      - name: Compile (debug)
+        run: >
+          arduino-cli compile -b "esp32:esp32:esp32c3:CDCOnBoot=cdc"
+          --build-property "compiler.cpp.extra_flags=-DTPMS_DEBUG=1"
+          --build-path /tmp/debug-build ESP-TPMS

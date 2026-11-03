@@ -5,6 +5,8 @@ It listens to cheap BLE TPMS sensors, shows pressure, temperature and battery fo
 
 Inspired by [ra6070/BLE-TPMS](https://github.com/ra6070/BLE-TPMS).
 
+[![Build](https://github.com/mnimonic/esp32-tpms/actions/workflows/build.yml/badge.svg)](https://github.com/mnimonic/esp32-tpms/actions/workflows/build.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
 ![status colours](https://img.shields.io/badge/in%20range-green-2ea043) ![below MIN](https://img.shields.io/badge/below%20MIN-red-d73a49) ![above MAX](https://img.shields.io/badge/above%20MAX-blue-3b82f6) ![no signal](https://img.shields.io/badge/no%20signal-orange-f59e0b)
 
 ## Features
@@ -168,6 +170,12 @@ The sensors sleep when they are not moving and only broadcast occasionally, so a
 
 ## Building
 
+Clone into a folder named **`ESP-TPMS`** – Arduino requires the folder name to match `ESP-TPMS.ino`:
+
+```sh
+git clone https://github.com/mnimonic/esp32-tpms.git ESP-TPMS
+```
+
 ### Arduino IDE
 
 1. **File → Preferences → Additional boards manager URLs:**
@@ -196,17 +204,6 @@ If the screen shows wrong colours or a band of random pixels along an edge, chan
 ```
 
 The module used here has a **green** tab but needs `INITR_BLACKTAB`.
-
-## Boot logo
-
-The splash logo is compiled in from `logo.h` (1 bit per pixel, drawn white on black). To use another image:
-
-```sh
-pip install pillow
-python tools/img2bitmap.py my-logo.png logo.h 120 70   # fits the logo into 120 x 70 px
-```
-
-Dark pixels in the image become the white logo on screen. Change `SPLASH_MS` in the sketch for a different duration.
 
 ## Sensor protocols
 
@@ -243,3 +240,18 @@ These constants are at the top of `ESP-TPMS.ino`:
 | `TPMS_DEBUG` | `0` | `1` = verbose serial log (every reading, 30 s status, screen dim/off). Can also be set at build time: `--build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1` |
 | `AGED_MS` | 2 min | An OK reading older than this is shown in grey |
 | `PRINT_RAW` | `false` | Also print raw payload bytes to serial (debug builds) |
+
+## Boot logo
+
+The 10 s splash shows a 1-bit logo drawn white on black. The repository ships a neutral TPMS symbol (`logo.h`, made by `tools/make_default_logo.py`). To show your own logo, create `logo_custom.h`:
+
+```sh
+pip install pillow
+python tools/img2bitmap.py my-logo.png logo_custom.h 120 70   # fits the logo into 120 x 70 px
+```
+
+Dark pixels in the image become the white logo on screen. `logo_custom.h` is git-ignored, so a personal or trademarked logo never ends up in the repository; the sketch uses it automatically when it exists. Change `SPLASH_MS` in the sketch for a different duration.
+
+## License
+
+MIT – see [LICENSE](LICENSE). Changes are listed in [CHANGELOG.md](CHANGELOG.md).

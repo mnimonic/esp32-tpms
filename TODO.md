@@ -43,10 +43,10 @@ The device is powered from an **ignition-switched** supply, so it only runs whil
 
 ## 7. Code and project
 - [x] **git init**, first commit, push to GitHub: https://github.com/mnimonic/esp32-tpms (public). Still open: remove the personal path from `CLAUDE.md`, decide about the CFMOTO logo in the public repo, delete the duplicate `mnimonic/ESP-TPMS` repo.
-- [ ] **Add a LICENSE** (e.g. MIT) and **photos and a screenshot** to the README.
-- [ ] **GitHub Actions:** compile the sketch on every push with arduino-cli.
+- [x] **Add a LICENSE** (MIT). Still open: **photos and a screenshot** in the README.
+- [x] **GitHub Actions:** compile the sketch on every push with arduino-cli.
 - [ ] **Split the sketch** into several files (`decoders.h`, `display.h`, `menu.h`, `button.h`). It is now about 1000 lines.
 - [ ] **Unit tests for the decoders** using the captured payloads (e.g. `40 1D 1D 00 92 15 A9`).
 - [x] **Watchdog timer**, so the board restarts if it ever hangs.
 - [x] **Remove or hide debug output** (raw dumps, "slowest loop") behind a `DEBUG` flag for release builds.
-- [ ] **Version history:** a `CHANGELOG.md`, and tags in git for each `FW_VERSION`.
+- [x] **Version history:** a `CHANGELOG.md`, and tags in git for each `FW_VERSION`.
