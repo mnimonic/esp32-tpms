@@ -36,9 +36,11 @@ static void processReadings() {
 
     if (pos >= 0 && !repeat) {
       addPressureSample(pos, r.psi * 0.0689476f, r.ms);
+      logReading(pos, r);
       if (isLowBattery(r) && !lowBattWarned[pos]) {
         lowBattWarned[pos] = true;
         Serial.printf("!! %s sensor battery LOW (%.1f V)\n", POSITION_NAMES[pos], r.volts);
+        logLowBattery(pos, r);
       }
     }
 

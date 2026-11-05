@@ -18,6 +18,8 @@ void setup() {
   initDisplay();
 
   loadPositions();
+  sdInit();                                      // SD card log (shares the SPI bus with the TFT)
+  drawSplashSd();
   setBacklightPct(BRIGHT_PCT[brightIdx]);
   buzzerInit();
   BUZZ(PAT_CHIRP);                               // short start-up chirp = buzzer works
@@ -71,6 +73,7 @@ void loop() {
 #endif
   buzzerReminder();
   updateAlerts();
+  sdLogLoop();
   manageScreen();
   updateDisplay();
 

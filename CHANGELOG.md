@@ -2,6 +2,10 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.1
+- **SD card ride log:** with a card in the TFT module's slot (SD_MISO → GPIO 20, SD_CS → GPIO 21), every ignition-on is logged to `/logs/rideNNNN.csv`: one row per wheel every 10 s, plus every state change (alerts, no signal), low battery and sensor status-byte changes. Oldest rides are deleted when the card gets full. The splash shows the ride number or "no SD card".
+- WiFi page: *Ride logs* section to download the CSV files.
+
 ## 0.1.0
 - **WiFi settings page:** Menu → WiFi setup starts a hotspot (`ESP-TPMS` / `tpms1234`); http://192.168.4.1 shows live readings and every setting, plus reset pairing and factory reset. Click or 10 min idle switches WiFi off. Password can be set in a git-ignored `secrets.h`.
 - Partition scheme **Minimal SPIFFS (1.9 MB app)** is now required (the firmware is 1.34 MB).

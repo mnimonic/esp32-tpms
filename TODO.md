@@ -1,6 +1,6 @@
 # ESP-TPMS – To do
 
-Current firmware: **v0.1.0**. Items are grouped by area and roughly ordered by value within each group.
+Current firmware: **v0.1.1**. Items are grouped by area and roughly ordered by value within each group.
 
 ## 1. Verify before riding
 - [ ] **Check pressure readings against a gauge or the phone app** with sensors mounted. The `(raw − 145) / 10` psi formula comes from one source and has only been checked at about 0 psi.
@@ -33,7 +33,8 @@ The device is powered from an **ignition-switched** supply, so it only runs whil
 ## 5. Connectivity (optional)
 - [x] **WiFi page for the phone:** settings and a live view, as an easier way to set limits than the button.
 - [ ] **OTA firmware updates** over WiFi, so the board can stay mounted.
-- [ ] **Data log:** keep min/max pressure and temperature per ride, viewable in the menu or on the WiFi page.
+- [x] **Data log:** SD card ride logs (CSV per ignition-on), downloadable from the WiFi page (code ready; wire SD_MISO 20 / SD_CS 21 and test).
+- [ ] **Real time in the logs:** the WiFi page could send the phone's clock so rows get a date/time.
 
 ## 6. Hardware and build
 - [ ] **Enclosure:** waterproof (IP65), vibration-proof mounting, sunlight-readable screen (or an anti-glare film).

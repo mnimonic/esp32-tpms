@@ -159,6 +159,55 @@ static void webFactoryReset() {
   factoryReset();                      // restarts the board
 }
 
+// ---- SD card logs ----
+static void webLogs() {                // list of log files: {"sd":true,"ride":12,"files":[{"n":"ride0012.csv","s":1234}]}
+  wifiTouch();
+  String j = "{";
+  jsonBool(j, "sd", sdOk);
+  jsonInt(j, "ride", rideNo);
+  j += "\"files\":[";
+  if (sdOk) {
+    logFlush();                        // include the latest rows
+    File dir = SD.open(LOG_DIR);
+    bool first = true;
+    for (File f = dir ? dir.openNextFile() : File(); f; f = dir.openNextFile()) {
+      if (rideNumberOf(f.name()) > 0) {
+        if (!first) j += ',';
+        first = false;
+        j += "{\"n\":\""; j += f.name(); j += "\",\"s\":"; j += (unsigned long)f.size(); j += '}';
+      }
+      f.close();
+      esp_task_wdt_reset();
+    }
+    if (dir) dir.close();
+  }
+  j += "]}";
+  web.send(200, "application/json", j);
+}
+
+static void webLogFile() {             // /log?f=ride0012.csv -> download
+  wifiTouch();
+  String name = web.arg("f");
+  if (!sdOk || rideNumberOf(name.c_str()) <= 0 || name.indexOf('/') >= 0 || name.length() > 16) {
+    web.send(404, "text/plain", "no such log");
+    return;
+  }
+  logFlush();
+  File f = SD.open(String(LOG_DIR) + "/" + name, FILE_READ);
+  if (!f) { web.send(404, "text/plain", "no such log"); return; }
+  web.setContentLength(f.size());
+  web.sendHeader("Content-Disposition", "attachment; filename=\"tpms-" + name + "\"");
+  web.send(200, "text/csv", "");
+  uint8_t buf[1024];
+  while (f.available()) {              // in chunks, so a big file does not trip the watchdog
+    int n = f.read(buf, sizeof(buf));
+    if (n <= 0) break;
+    web.sendContent((const char*)buf, n);
+    esp_task_wdt_reset();
+  }
+  f.close();
+}
+
 static void webNotFound() {            // any other URL -> settings page
   web.sendHeader("Location", "/");
   web.send(302, "text/plain", "");
@@ -209,6 +258,8 @@ static void wifiStart() {
     web.on("/api/settings", HTTP_POST, webSettings);
     web.on("/api/reset_pairing", HTTP_POST, webResetPairing);
     web.on("/api/factory_reset", HTTP_POST, webFactoryReset);
+    web.on("/api/logs", HTTP_GET, webLogs);
+    web.on("/log", HTTP_GET, webLogFile);
     web.onNotFound(webNotFound);
     routes = true;
   }

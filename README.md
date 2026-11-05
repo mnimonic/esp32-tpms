@@ -50,6 +50,15 @@ Inspired by [ra6070/BLE-TPMS](https://github.com/ra6070/BLE-TPMS).
 | RES / RST | GPIO 3 | Reset |
 | BL / LED | GPIO 1 | Backlight (PWM brightness / screen off). Can also go to 3.3V; then set `TFT_BL = -1` |
 
+| SD slot on the TFT module (optional) | ESP32-C3 SuperMini | Function |
+|---|---|---|
+| SD_SCK | GPIO 6 | Shared with TFT SCK |
+| SD_MOSI | GPIO 7 | Shared with TFT SDA/MOSI |
+| SD_MISO | GPIO 20 | SPI data in (SD only) |
+| SD_CS | GPIO 21 | SD chip select |
+
+Some modules join SD_SCK/SD_MOSI to the TFT pins on the board; then only SD_MISO and SD_CS need wires. No card or no SD wiring: the firmware runs normally and does not log (set `SD_CS = -1` to skip the check).
+
 | Button | ESP32-C3 SuperMini |
 |---|---|
 | Leg 1 | GPIO 4 |
@@ -76,11 +85,13 @@ An **active** buzzer is assumed. For a **passive** buzzer set `BUZZER_PASSIVE = 
   TFT SCL ─────┤ GPIO6             │           GND
   TFT SDA ─────┤ GPIO7             │
   TFT CS  ─────┤ GPIO10            │
+  SD MISO ─────┤ GPIO20            │   (SD SCK/MOSI share GPIO6/7)
+  SD CS   ─────┤ GPIO21            │
                │       USB-C       │  ← power 5 V / programming
                └───────────────────┘
 ```
 
-Avoid GPIO 2, 8 and 9 (strapping pins; 8 is the onboard LED, 9 is the BOOT button) and GPIO 18/19 (USB).
+Avoid GPIO 2, 8 and 9 (strapping pins; 8 is the onboard LED, 9 is the BOOT button) and GPIO 18/19 (USB). GPIO 20/21 (UART RX/TX) are free because Serial runs over USB.
 If you move the TFT pins, change `TFT_SCK`, `TFT_MOSI`, `TFT_CS`, `TFT_DC`, `TFT_RST` and `TFT_BL` at the top of the sketch. The C3 can route SPI to almost any GPIO.
 
 ## Using it
@@ -169,6 +180,21 @@ To use your own password, create `secrets.h` next to the sketch (it is git-ignor
 // #define WIFI_AP_SSID "My-TPMS"    // optional
 ```
 
+### SD card log (optional)
+
+With a microSD card (FAT32) in the TFT module's slot, every ignition-on is logged to its own file **`/logs/rideNNNN.csv`** (numbered upwards; the splash shows "SD log: ride N" or "no SD card").
+
+| Column | Meaning |
+|---|---|
+| `t_s` | Seconds since power-on (the board has no clock) |
+| `pos` | Front / Back (empty for board events) |
+| `event` | `data` (one per wheel every 10 s, and when the sensor's status byte changes), `state` (OK / LOW / HIGH / DROPPING! / HOT! / NO SIGNAL / …), `lowbat`, `boot`, `sensor` (paired address and limits) |
+| `bar`, `temp_c`, `volts`, `batt_pct`, `status`, `rssi` | Last reading of that wheel |
+| `state`, `note` | State at that moment; extra info (firmware + reset reason, "from X bar", "status changed") |
+
+Rows are flushed to the card every 10 s and on every state change, so turning the ignition off loses at most the last 10 s. About 45 kB per hour. When less than 16 MB is free the oldest rides are deleted.
+**Download:** the WiFi page lists all rides under *Ride logs* – tap one to save the CSV on the phone. Or take the card out and open the files on a PC.
+
 ### Buzzer (optional)
 
 | Event | Sound |
@@ -255,6 +281,7 @@ The module used here has a **green** tab but needs `INITR_BLACKTAB`.
 | `40_pairing.ino` | Storing sensors with the button |
 | `50_menu.ino` | Settings menu and button handling |
 | `60_readings.ino` | Processing incoming readings |
+| `65_sdlog.ino` | SD card ride log |
 | `70_display.ino` | Main screen layouts, menu drawing, splash |
 | `80_screen.ino` | Backlight, dim and screen-off |
 | `85_wifi.ino` + `web_page.h` | WiFi hotspot and settings page |

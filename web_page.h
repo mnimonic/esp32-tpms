@@ -1,5 +1,6 @@
 // Settings page served at http://192.168.4.1 while "WiFi setup" is active.
-// Talks to /api/config, /api/status, /api/settings, /api/reset_pairing, /api/factory_reset.
+// Talks to /api/config, /api/status, /api/settings, /api/reset_pairing, /api/factory_reset,
+// /api/logs and /log?f=<file> (SD card ride logs).
 #pragma once
 #include <Arduino.h>
 
@@ -15,6 +16,7 @@ main{padding:12px 16px;max-width:520px;margin:auto}
 .card{background:#1c1c1c;border-radius:10px;padding:10px;border-left:6px solid #666;min-height:84px}
 .card .p{font-size:2em;font-weight:700;margin:4px 0}
 .card small{color:#aaa}
+#logs a{display:flex;justify-content:space-between;color:#9cf;padding:7px 0;border-bottom:1px solid #222;text-decoration:none}
 fieldset{border:1px solid #333;border-radius:10px;margin:14px 0;padding:6px 12px}
 legend{color:#9cf;padding:0 4px}
 label{display:flex;justify-content:space-between;align-items:center;margin:8px 0;gap:10px}
@@ -52,6 +54,7 @@ button.warn{background:#7a1f1f}
 <button type="submit">Save settings</button>
 <div id="msg"></div>
 </form>
+<fieldset><legend>Ride logs (SD card)</legend><div id="logs"><small>loading…</small></div></fieldset>
 <fieldset><legend>Maintenance</legend>
 <button class="warn" id="rp" type="button">Reset pairing</button>
 <button class="warn" id="fr" type="button">Factory reset</button>
@@ -110,5 +113,11 @@ async function status(){try{const s=await (await fetch('/api/status')).json();
   return '<div class="card" style="border-color:'+(COL[p.state]||'#666')+'"><b>'+p.name+'</b> <small>'+p.state+'</small>'+
    '<div class="p">'+v+' <small>'+(s.psi?'psi':'bar')+'</small></div><small>'+t+' · '+b+' · '+p.age+' s ago</small></div>';}).join('');
  }catch(x){}}
-load().then(status);setInterval(status,2000);
+async function logs(){try{const l=await (await fetch('/api/logs')).json();
+ if(!l.sd){$('#logs').innerHTML='<small>No SD card</small>';return;}
+ const kb=s=>s<1024?s+' B':(s/1024).toFixed(0)+' kB';
+ $('#logs').innerHTML=l.files.length?l.files.sort((a,b)=>b.n.localeCompare(a.n)).map(f=>
+  '<a href="/log?f='+f.n+'" download="tpms-'+f.n+'"><span>'+f.n+(parseInt(f.n.slice(4))==l.ride?' (current)':'')+'</span><small>'+kb(f.s)+'</small></a>').join(''):'<small>No logs yet</small>';
+ }catch(x){$('#logs').innerHTML='<small>?</small>';}}
+load().then(status).then(logs);setInterval(status,2000);
 </script></body></html>)rawliteral";

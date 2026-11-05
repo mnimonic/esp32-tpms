@@ -58,7 +58,8 @@ static void initDisplay() {
     ledcAttach(TFT_BL, 5000, 8);       // 5 kHz, 8-bit PWM
     setBacklightPct(100);
   }
-  SPI.begin(TFT_SCK, -1, TFT_MOSI, TFT_CS);
+  if (SD_CS >= 0) { pinMode(SD_CS, OUTPUT); digitalWrite(SD_CS, HIGH); }   // keep the SD card off the bus
+  SPI.begin(TFT_SCK, SD_CS >= 0 ? SD_MISO : -1, TFT_MOSI, -1);  // MISO only needed by the SD card
   tft.initR(TFT_TAB);
   tft.setSPISpeed(27000000);
   tft.setRotation(0);              // portrait, 128 x 160 (rotate180 applied after loading settings)
@@ -86,7 +87,20 @@ static void drawSplash() {
     tft.setCursor((128 - strlen(msg) * 6) / 2, 124);
     tft.print(msg);
   }
+  drawSplashSd();
   splashActive = true;
   splashStart  = millis();
+}
+
+// SD status line on the splash ("log ride 12" / "no SD card")
+static void drawSplashSd() {
+  if (!sdChecked || SD_CS < 0) return;
+  char msg[24];
+  if (sdOk) snprintf(msg, sizeof(msg), "SD log: ride %d", rideNo);
+  else      snprintf(msg, sizeof(msg), "no SD card");
+  tft.setTextSize(1);
+  tft.setTextColor(sdOk ? COL_GREY : COL_ORANGE, ST77XX_BLACK);
+  tft.setCursor((128 - strlen(msg) * 6) / 2, 150);
+  tft.print(msg);
 }
 

@@ -37,6 +37,7 @@
 static const uint32_t WDT_TIMEOUT_MS = 10000;
 
 #include <SPI.h>
+#include <SD.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7735.h>
 #include <Fonts/FreeSansBold24pt7b.h>   // large pressure number (Classic, Minimal)
@@ -55,7 +56,7 @@ static bool     splashActive = false;
 static uint32_t splashStart  = 0;
 
 // ---------------- Version ----------------
-#define FW_VERSION "0.1.0"     // shown in the settings menu, on the start screen and in the serial log
+#define FW_VERSION "0.1.1"     // shown in the settings menu, on the start screen and in the serial log
 
 // Verbose serial output (every reading, 30 s status, screen dim/off). 0 = release.
 // Can also be set when building: --build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1
@@ -242,6 +243,22 @@ static WebServer web(80);
 static bool      wifiActive  = false;
 static uint32_t  wifiLastUse = 0;
 
+// ---------------- SD card log (optional) ----------------
+// The SD slot on the TFT module shares SCK (6) and MOSI (7) with the display.
+// Wiring: SD_MISO -> GPIO 20, SD_CS -> GPIO 21. SD_CS -1 = no SD card.
+// Without a card the firmware runs normally and simply does not log.
+static const int      SD_MISO       = 20;
+static const int      SD_CS         = 21;
+static const uint32_t SD_SPI_HZ     = 20000000;
+static const uint32_t LOG_EVERY_MS  = 10000;    // one data row per wheel per 10 s (plus every event)
+static const uint32_t LOG_FLUSH_MS  = 10000;    // buffered rows are written at least this often
+static const uint64_t LOG_MIN_FREE  = 16ULL * 1024 * 1024;  // delete oldest rides below this free space
+static bool     sdOk       = false;   // card mounted and log file open
+static bool     sdChecked  = false;   // sdInit() has run (for the splash line)
+static int      rideNo     = 0;       // number of the current log file (/logs/rideNNNN.csv)
+static File     logFile;
+static String   logBuf;
+
 // ---------------- Current look (used by the display tab) ----------------
 // Note: the main file must contain a function after the data types above;
 // Arduino inserts the generated prototypes of ALL tabs before it.
@@ -256,6 +273,7 @@ static Layout         L() { return (Layout)layoutIdx; }       // current layout
 //   40_pairing.ino     Button actions
 //   50_menu.ino        Settings menu (MIN/MAX per position)
 //   60_readings.ino    Reading handling
+//   65_sdlog.ino       SD card measurement log
 //   70_display.ino     Display
 //   80_screen.ino      Backlight / screen sleep
 //   85_wifi.ino        WiFi settings page
