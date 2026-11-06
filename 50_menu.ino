@@ -145,6 +145,7 @@ static void menuClick() {
   if (menuSel == MENU_SAVE) { closeMenu(true, false); return; }
   if (menuSel == MENU_WIFI) {               // keeps the menu changes, no SAVED screen
     drawMessage("WiFi", "starting...", 0x3B9F);
+    delay(1000);                             // readable (well under the 10 s watchdog)
     closeMenu(true, true);
     wifiStart();                             // replaces it with the connect screen
     return;
