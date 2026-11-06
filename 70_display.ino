@@ -438,38 +438,94 @@ static void updateDisplay() {
   first = false;
 }
 
-// Settings menu screen
-static void drawMenu() {
+static void sdMbText(char* v, size_t n, uint32_t m) {
+  if (m >= 1024) snprintf(v, n, "%lu.%lu GB", (unsigned long)(m / 1024), (unsigned long)(m % 1024 * 10 / 1024));
+  else           snprintf(v, n, "%lu MB", (unsigned long)m);
+}
+
+// SD card submenu screen
+static void drawSdMenu() {
   tft.fillScreen(ST77XX_BLACK);
   tft.fillRect(0, 0, 128, 16, ST77XX_WHITE);
   tft.setTextSize(1);
   tft.setTextColor(ST77XX_BLACK);
   tft.setCursor(4, 4);
-  tft.print("SETTINGS");
-  tft.setCursor(58, 4);
-  tft.print("v" FW_VERSION);
-  tft.setCursor(124 - 3 * 6, 4);
-  tft.print(usePsi ? "psi" : "bar");
+  tft.print("SETTINGS > SD CARD");
+
+  tft.setTextColor(COL_GREY);
+  tft.setCursor(4, 22); tft.print("Card");
+  tft.setCursor(4, 33); tft.print("Free");
+  tft.setCursor(4, 44); tft.print("Logging");
+  tft.setTextColor(sdOk ? ST77XX_WHITE : ST77XX_RED);
+  char v[20];
+  if (sdOk) sdMbText(v, sizeof(v), sdInfoTotalMB); else snprintf(v, sizeof(v), "none");
+  tft.setCursor(122 - strlen(v) * 6, 22); tft.print(v);
+  if (sdOk) sdMbText(v, sizeof(v), sdInfoFreeMB); else snprintf(v, sizeof(v), "-");
+  tft.setCursor(122 - strlen(v) * 6, 33); tft.print(v);
+  if (sdOk) snprintf(v, sizeof(v), "ride%04d", rideNo); else snprintf(v, sizeof(v), "off");
+  tft.setCursor(122 - strlen(v) * 6, 44); tft.print(v);
+  tft.drawFastHLine(0, 56, 128, 0x39E7);
+
+  for (int k = 0; k < SDM_ITEMS; k++) {
+    int y = 62 + k * 12;
+    bool sel = (k == sdSel);
+    bool armed = sel && k != SDM_BACK && resetArmed;
+    if (sel) tft.fillRect(0, y - 2, 128, 11, armed ? ST77XX_RED : ST77XX_YELLOW);
+    tft.setTextColor(armed ? ST77XX_WHITE : (sel ? ST77XX_BLACK : ST77XX_WHITE));
+    tft.setCursor(4, y);
+    if (k == SDM_DELETE)      tft.print(armed ? "DELETE ALL LOGS?" : "Delete all logs");
+    else if (k == SDM_FORMAT) tft.print(armed ? "ERASE WHOLE CARD?" : "Format card");
+    else                      tft.print("< Back");
+  }
+
+  tft.setTextColor(COL_GREY);
+  tft.setCursor(4, 139);
+  if (sdSel == SDM_BACK)  tft.print("Click: back");
+  else if (resetArmed)    tft.print("Click: CONFIRM");
+  else                    tft.print(sdSel == SDM_FORMAT ? "Click: format" : "Click: delete");
+  tft.setCursor(4, 150);
+  tft.print(resetArmed ? "Hold 1s: cancel" : "Hold 1s next/5s SAVE");
+}
+
+// Settings menu screen
+static void drawMenu() {
+  if (sdMenu) { drawSdMenu(); return; }
+  tft.fillScreen(ST77XX_BLACK);
+  tft.fillRect(0, 0, 128, 16, ST77XX_WHITE);
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.setCursor(4, 4);
+  if (dispMenu) {
+    tft.print("SETTINGS > DISPLAY");
+  } else {
+    tft.print("SETTINGS");
+    tft.setCursor(58, 4);
+    tft.print("v" FW_VERSION);
+    tft.setCursor(124 - 3 * 6, 4);
+    tft.print(usePsi ? "psi" : "bar");
+  }
 
   // Scroll so the selected item is always visible
-  int top = menuSel - (MENU_VISIBLE - 1);
+  int top = menuPos - (MENU_VISIBLE - 1);
   if (top < 0) top = 0;
-  if (MENU_ITEMS > MENU_VISIBLE) {     // scrollbar on the right edge
+  if (menuPageN > MENU_VISIBLE) {      // scrollbar on the right edge
     int trackH = MENU_VISIBLE * 10;
-    int thumbH = trackH * MENU_VISIBLE / MENU_ITEMS;
-    int thumbY = 19 + (trackH - thumbH) * top / (MENU_ITEMS - MENU_VISIBLE);
+    int thumbH = trackH * MENU_VISIBLE / menuPageN;
+    int thumbY = 19 + (trackH - thumbH) * top / (menuPageN - MENU_VISIBLE);
     tft.fillRect(126, 19, 2, trackH, 0x39E7);
     tft.fillRect(126, thumbY, 2, thumbH, ST77XX_WHITE);
   }
 
-  for (int k = top; k < MENU_ITEMS && k < top + MENU_VISIBLE; k++) {
-    int y = 20 + (k - top) * 10;
+  for (int i = top; i < menuPageN && i < top + MENU_VISIBLE; i++) {
+    int k = menuPage[i];
+    int y = 20 + (i - top) * 10;
     bool sel = (k == menuSel);
     bool armed = sel && (k == MENU_RESET || k == MENU_FACTORY) && resetArmed;
     if (sel) tft.fillRect(0, y - 1, 125, 10, armed ? ST77XX_RED : ST77XX_YELLOW);
     tft.setTextColor(armed ? ST77XX_WHITE : (sel ? ST77XX_BLACK : ST77XX_WHITE));
     tft.setCursor(4, y);
     if (k == MENU_SAVE)  { tft.print("SAVE & EXIT"); continue; }
+    if (k == MENU_BACK)  { tft.print("< Back"); continue; }
     if (k == MENU_RESET)   { tft.print(armed ? "CONFIRM RESET?" : "RESET PAIRING"); continue; }
     if (k == MENU_FACTORY) { tft.print(armed ? "ERASE ALL?" : "FACTORY RESET"); continue; }
 
@@ -486,6 +542,12 @@ static void drawMenu() {
     } else if (k == MENU_STALE) {
       tft.print("No signal");
       snprintf(val, sizeof(val), "%um", STALE_MIN[editStale]);
+    } else if (k == MENU_DISP) {
+      tft.print("Display");
+      snprintf(val, sizeof(val), ">");
+    } else if (k == MENU_SD) {
+      tft.print("SD card");
+      snprintf(val, sizeof(val), sdOk ? ">" : "none >");
     } else if (k == MENU_WIFI) {
       tft.print("WiFi setup");
       snprintf(val, sizeof(val), "Start");
@@ -537,6 +599,8 @@ static void drawMenu() {
   if (menuSel == MENU_PUNIT || (menuSel >= MENU_TUNIT && menuSel <= MENU_COLORS)) help1 = "Click: change";
   if (menuSel == MENU_SAVE)  help1 = "Click: save";
   if (menuSel == MENU_WIFI)  help1 = "Click: save + WiFi";
+  if (menuSel == MENU_SD || menuSel == MENU_DISP) help1 = "Click: open";
+  if (menuSel == MENU_BACK)  help1 = "Click: back";
   if (menuSel == MENU_RESET) {
     help1 = resetArmed ? "Click: CONFIRM reset" : "Click: reset pairing";
     if (resetArmed) help2 = "Hold 1s: cancel";

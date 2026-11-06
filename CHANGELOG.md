@@ -2,6 +2,10 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.5
+- **Submenus:** "Display >" holds Brightness, Dim after, Dim level, Screen off, Rotate, Layout and Colors; the main list is shorter.
+- **SD card submenu:** shows card size, free space and the current log; *Delete all logs* and *Format card* (both need a second click). Opening it also detects a card inserted after start-up.
+
 ## 0.1.4
 - "WiFi starting..." box now stays 1 s so it can be read.
 

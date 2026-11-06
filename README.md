@@ -109,17 +109,40 @@ If you move the TFT pins, change `TFT_SCK`, `TFT_MOSI`, `TFT_CS`, `TFT_DC`, `TFT
 | Settings → RESET PAIRING | Click twice | Forget both sensors (first click asks to confirm, hold cancels) |
 | Settings → FACTORY RESET | Click twice | Erase pairing, limits and all settings, then restart (hold cancels) |
 | Settings → SAVE & EXIT | Click | Save all settings and return |
+| Settings → Display > / SD card > | Click | Open the submenu (its last item "< Back" returns; hold 5 s still saves & exits) |
+| SD card → Delete all logs | Click twice | Delete every ride log, then start a new one (hold cancels) |
+| SD card → Format card | Click twice | Quick-format the whole card, then start a new log (hold cancels) |
 | Boot splash | Click | Skip the 3 s splash |
 | Screen dimmed / off | Click | Wake the screen only |
 
-"WiFi setup" is the first menu item, so it is one click after opening the menu. The menu closes without saving after 60 s with no button press. The software version is shown in the menu header. The list scrolls (scrollbar on the right) to keep the selected item visible.
+"WiFi setup" is the first menu item, so it is one click after opening the menu.
 
-### Display settings (in the menu)
+Menu structure:
+
+```
+SETTINGS
+  WiFi setup        Start
+  Pressure unit     bar/psi
+  Front/Back MIN, MAX
+  Temp unit, Max temp, No signal, Buzzer, Scan
+  Display >         Brightness, Dim after, Dim level, Screen off, Rotate, Layout, Colors, < Back
+  SD card >         card size / free space / current log, Delete all logs, Format card, < Back
+  RESET PAIRING, FACTORY RESET, SAVE & EXIT
+```
+
+Opening "SD card >" also picks up a card that was inserted after start-up. The menu closes without saving after 60 s with no button press. The software version is shown in the menu header. The list scrolls (scrollbar on the right) to keep the selected item visible.
+
+### Unit settings (in the menu)
 
 | Item | Values | Effect |
 |---|---|---|
 | Pressure unit | bar / psi | Unit for pressure and MIN/MAX (the menu values switch immediately) |
 | Temp unit | C / F | Unit for temperatures and Max temp |
+
+### Display settings (menu → Display >)
+
+| Item | Values | Effect |
+|---|---|---|
 | Rotate | 0 / 180 | Turn the picture upside down (previewed immediately, reverted if not saved) |
 | Layout | Classic / Minimal / Detail / Retro | Fonts and positions on the main screen (see below) |
 | Colors | Dark / Light / Green LCD / Amber | Colours of the main screen (any combination with any layout) |
@@ -132,7 +155,7 @@ If you move the TFT pins, change `TFT_SCK`, `TFT_MOSI`, `TFT_CS`, `TFT_DC`, `TFT
 | No signal | 5 / 15 / 30 / 60 min | A wheel with no data for this long turns orange "NO SIGNAL" (default 15 min) |
 | Max temp | Off / 60 / 70 / 80 / 90 °C | Above it the wheel shows magenta "HOT!" (default 80 °C) |
 
-### Power settings (in the menu)
+### Power settings (Scan in the menu, the rest in menu → Display >)
 
 | Item | Values | Effect |
 |---|---|---|

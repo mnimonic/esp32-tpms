@@ -12,6 +12,9 @@
 // Power is cut without warning (ignition), so rows are written in small blocks
 // and flushed: at most LOG_FLUSH_MS of data is lost.
 
+#include "sd_diskio.h"      // sdcard_init / sdcard_uninit (for formatting)
+#include "ff.h"             // f_mkfs
+
 static const char* LOG_DIR = "/logs";
 
 static int rideNumberOf(const char* name) {      // "ride0012.csv" -> 12, otherwise -1
@@ -165,4 +168,77 @@ static void sdLogLoop() {
     lastFlush = millis();
     logFlush();
   }
+}
+
+// ---- Card maintenance (SD card submenu) ----
+
+// Close everything, remount and start a new ride file (also picks up a card inserted later)
+static void sdRestart() {
+  if (sdOk) logFlush();
+  if (logFile) logFile.close();
+  sdOk = false;
+  logBuf = "";
+  SD.end();
+  sdInit();
+}
+
+// Deletes every ride file, then starts a new log. Returns the number deleted, -1 = no card.
+static int sdDeleteLogs() {
+  if (!sdOk) sdRestart();
+  if (!sdOk) return -1;
+  logFlush();
+  logFile.close();
+  sdOk = false;
+  static String names[64];
+  int n = 0, total = 0;
+  do {                                 // collect first, then delete (max 64 per pass)
+    n = 0;
+    File dir = SD.open(LOG_DIR);
+    for (File f = dir ? dir.openNextFile() : File(); f && n < 64; f = dir.openNextFile()) {
+      if (rideNumberOf(f.name()) > 0) names[n++] = String(LOG_DIR) + "/" + f.name();
+      f.close();
+    }
+    if (dir) dir.close();
+    int removed = 0;
+    for (int i = 0; i < n; i++) {
+      if (SD.remove(names[i])) removed++;
+      esp_task_wdt_reset();
+    }
+    total += removed;
+    if (!removed) break;               // nothing could be removed: stop
+  } while (n == 64);
+  Serial.printf(">> SD: deleted %d log file(s)\n", total);
+  sdRestart();                         // new log starts at ride0001
+  return total;
+}
+
+// Quick format (FatFs picks FAT/FAT32/exFAT for the size). 0 = ok, 1 = no card, 2 = failed.
+static int sdFormat() {
+  if (SD_CS < 0) return 1;
+  if (sdOk) logFlush();
+  if (logFile) logFile.close();
+  sdOk = false;
+  logBuf = "";
+  SD.end();
+  uint8_t pdrv = sdcard_init(SD_CS, &SPI, SD_SPI_HZ);
+  if (pdrv == 0xFF) { sdInit(); return 1; }
+  char drv[3] = {(char)('0' + pdrv), ':', 0};
+  const size_t WORK = 16 * 1024;       // bigger buffer = multi-sector writes = faster
+  BYTE* work = (BYTE*)malloc(WORK);
+  FRESULT res = FR_NOT_ENOUGH_CORE;
+  if (work) {
+    Serial.println(">> SD: formatting...");
+    uint32_t t0 = millis();
+    esp_task_wdt_delete(NULL);         // a big card can take longer than the 10 s watchdog
+    const MKFS_PARM opt = {(BYTE)FM_ANY, 0, 0, 0, 0};
+    res = f_mkfs(drv, &opt, work, WORK);
+    esp_task_wdt_add(NULL);
+    free(work);
+    Serial.printf(">> SD: format %s (%d) in %lu ms\n", res == FR_OK ? "done" : "FAILED", (int)res,
+                  (unsigned long)(millis() - t0));
+  }
+  sdcard_uninit(pdrv);
+  sdInit();                            // mount the fresh card, new log ride0001
+  if (res == FR_NOT_READY) return 1;
+  return (res == FR_OK && sdOk) ? 0 : 2;
 }

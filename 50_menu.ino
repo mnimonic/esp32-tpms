@@ -1,6 +1,9 @@
 // ---------------- Settings menu (MIN/MAX per position) ----------------
-// Items: WiFi setup, Pressure unit, Front MIN, Front MAX, Back MIN, Back MAX, Temp unit, ..., Scan, Brightness,
-//        Screen off, RESET PAIRING, SAVE & EXIT
+// Main list: WiFi setup, Pressure unit, Front/Back MIN/MAX, Temp unit, Max temp, No signal, Buzzer, Scan,
+//            Display >, SD card >, RESET PAIRING, FACTORY RESET, SAVE & EXIT
+// Display >: Brightness, Dim after, Dim level, Screen off, Rotate, Layout, Colors, < Back
+// SD card >: card info, Delete all logs, Format card, < Back (own screen, see drawSdMenu)
+// MENU_* are item ids; the pages below list which ids are shown in which order.
 static const int MENU_WIFI   = 0;                        // first (easy to reach): save menu + start WiFi settings page
 static const int MENU_PUNIT  = 1;                        // bar / psi (before MIN/MAX: they use this unit)
 static const int MENU_LIM0   = 2;                        // first MIN/MAX item: Front MIN, Front MAX, Back MIN, Back MAX
@@ -16,10 +19,30 @@ static const int MENU_OFF    = MENU_TUNIT + 8;
 static const int MENU_ROT    = MENU_TUNIT + 9;
 static const int MENU_LAYOUT = MENU_TUNIT + 10;
 static const int MENU_COLORS = MENU_TUNIT + 11;
-static const int MENU_RESET  = MENU_TUNIT + 12;
-static const int MENU_FACTORY= MENU_TUNIT + 13;
-static const int MENU_SAVE   = MENU_TUNIT + 14;
-static const int MENU_ITEMS  = MENU_TUNIT + 15;
+static const int MENU_SD     = MENU_TUNIT + 12;   // opens the SD card submenu
+static const int MENU_RESET  = MENU_TUNIT + 13;
+static const int MENU_FACTORY= MENU_TUNIT + 14;
+static const int MENU_SAVE   = MENU_TUNIT + 15;
+static const int MENU_DISP   = MENU_TUNIT + 16;   // opens the Display submenu
+static const int MENU_BACK   = MENU_TUNIT + 17;   // submenu: back to the main list
+static const int MENU_IDS    = MENU_TUNIT + 18;
+static const int PAGE_DISP[] = {MENU_BRIGHT, MENU_DIM, MENU_DIMLVL, MENU_OFF, MENU_ROT, MENU_LAYOUT, MENU_COLORS,
+                                MENU_BACK};
+static const int PAGE_DISP_N = sizeof(PAGE_DISP) / sizeof(PAGE_DISP[0]);
+static int        pageMain[MENU_IDS];
+static int        pageMainN = 0;
+static const int* menuPage  = pageMain;   // list currently shown
+static int        menuPageN = 0;
+static int        menuPos   = 0;          // index into menuPage (menuSel = menuPage[menuPos])
+static bool       dispMenu  = false;      // Display submenu shown
+// SD card submenu (same buttons: click = do, hold 1 s = next item)
+static const int SDM_DELETE  = 0;     // delete all ride logs (two clicks)
+static const int SDM_FORMAT  = 1;     // format the card (two clicks)
+static const int SDM_BACK    = 2;
+static const int SDM_ITEMS   = 3;
+static bool      sdMenu = false;      // submenu shown (inside the settings menu)
+static int       sdSel = 0;
+static uint32_t  sdInfoTotalMB = 0, sdInfoFreeMB = 0;   // read when the submenu opens
 static const int MENU_VISIBLE = 11;    // rows that fit on screen; the list scrolls
 static bool      menuActive = false;
 static bool      resetArmed = false;   // RESET PAIRING / FACTORY RESET need a second click to confirm
@@ -31,9 +54,39 @@ static int       editLayout, editPalette;
 static bool      savedPsi;            // unit before the menu opened (restored if not saved)
 static uint32_t  menuLastInput = 0;
 
+static void buildMainPage() {
+  int n = 0;
+  pageMain[n++] = MENU_WIFI;
+  pageMain[n++] = MENU_PUNIT;
+  for (int i = 0; i < NUM_POSITIONS * 2; i++) pageMain[n++] = MENU_LIM0 + i;
+  pageMain[n++] = MENU_TUNIT;
+  pageMain[n++] = MENU_TMAX;
+  pageMain[n++] = MENU_STALE;
+  pageMain[n++] = MENU_BUZZ;
+  pageMain[n++] = MENU_SCAN;
+  pageMain[n++] = MENU_DISP;
+  pageMain[n++] = MENU_SD;
+  pageMain[n++] = MENU_RESET;
+  pageMain[n++] = MENU_FACTORY;
+  pageMain[n++] = MENU_SAVE;
+  pageMainN = n;
+}
+
+static void menuShowPage(const int* page, int n, int pos, bool disp) {
+  menuPage  = page;
+  menuPageN = n;
+  menuPos   = pos;
+  menuSel   = page[pos];
+  dispMenu  = disp;
+  resetArmed = false;
+}
+
 static void drawMenu();
 static void showMessage(const char* line1, const char* line2, uint16_t bg);
 static void drawMessage(const char* line1, const char* line2, uint16_t bg);
+static void sdRestart();
+static int  sdDeleteLogs();
+static int  sdFormat();
 static void setBacklightPct(int pct);
 static void applyRotation(bool flip);
 static void drawSplash();
@@ -63,8 +116,9 @@ static void openMenu() {
   editRotate = rotate180;
   editLayout = layoutIdx;
   editPalette = paletteIdx;
-  menuSel = 0;
-  resetArmed = false;
+  buildMainPage();
+  menuShowPage(pageMain, pageMainN, 0, false);
+  sdMenu = false;
   menuActive = true;
   menuLastInput = millis();
   Serial.println(">> Settings menu opened (click = +, hold 1 s = next item, hold 5 s = save & exit)");
@@ -109,7 +163,53 @@ static void closeMenu(bool save, bool quiet) {
   }
   lastActivity = millis();
   menuActive = false;
+  sdMenu = false;
+  dispMenu = false;
   displayDirty = true;
+}
+
+// ---- SD card submenu ----
+static void sdReadInfo() {
+  sdInfoTotalMB = sdOk ? (uint32_t)(SD.totalBytes() / (1024 * 1024)) : 0;
+  sdInfoFreeMB  = sdOk ? (uint32_t)((SD.totalBytes() - SD.usedBytes()) / (1024 * 1024)) : 0;
+}
+
+static void sdMenuOpen() {
+  if (!sdOk) sdRestart();              // card inserted after boot -> picked up here
+  sdReadInfo();
+  sdSel = 0;
+  resetArmed = false;
+  sdMenu = true;
+  drawMenu();
+}
+
+static void sdMenuClick() {
+  if (sdSel == SDM_BACK) { sdMenu = false; resetArmed = false; drawMenu(); return; }
+  if (!resetArmed) {                   // delete / format: first click asks for confirmation
+    resetArmed = true;
+    Serial.printf(">> SD: %s? Click again to confirm, hold to cancel\n",
+                  sdSel == SDM_FORMAT ? "format card" : "delete all logs");
+    drawMenu();
+    return;
+  }
+  resetArmed = false;
+  if (sdSel == SDM_DELETE) {
+    drawMessage("DELETING", "ride logs...", ST77XX_YELLOW);
+    int n = sdDeleteLogs();
+    char l2[24];
+    snprintf(l2, sizeof(l2), "%d file%s", n < 0 ? 0 : n, n == 1 ? "" : "s");
+    if (n < 0) showMessage("NO CARD", "", ST77XX_RED);
+    else       showMessage("DELETED", l2, ST77XX_GREEN);
+  } else {
+    drawMessage("FORMATTING", "please wait...", ST77XX_YELLOW);
+    int r = sdFormat();
+    if (r == 0)      showMessage("FORMATTED", "new log started", ST77XX_GREEN);
+    else if (r == 1) showMessage("NO CARD", "", ST77XX_RED);
+    else             showMessage("FORMAT", "failed", ST77XX_RED);
+  }
+  menuLastInput = millis();
+  sdReadInfo();
+  drawMenu();
 }
 
 // Click on a value: increase by one step, wrap to the lowest allowed value at the top.
@@ -142,6 +242,17 @@ static void factoryReset() {
 
 static void menuClick() {
   menuLastInput = millis();
+  if (sdMenu) { sdMenuClick(); return; }
+  if (menuSel == MENU_SD) { sdMenuOpen(); return; }
+  if (menuSel == MENU_DISP) { menuShowPage(PAGE_DISP, PAGE_DISP_N, 0, true); drawMenu(); return; }
+  if (menuSel == MENU_BACK) {                      // back to the main list, on "Display >"
+    int p = 0;
+    while (p < pageMainN - 1 && pageMain[p] != MENU_DISP) p++;
+    menuShowPage(pageMain, pageMainN, p, false);
+    setBacklightPct(BRIGHT_PCT[editBright]);
+    drawMenu();
+    return;
+  }
   if (menuSel == MENU_SAVE) { closeMenu(true, false); return; }
   if (menuSel == MENU_WIFI) {               // keeps the menu changes, no SAVED screen
     drawMessage("WiFi", "starting...", 0x3B9F);
@@ -196,7 +307,9 @@ static void menuClick() {
 static void menuNext() {
   menuLastInput = millis();
   resetArmed = false;
-  menuSel = (menuSel + 1) % MENU_ITEMS;
+  if (sdMenu) { sdSel = (sdSel + 1) % SDM_ITEMS; drawMenu(); return; }
+  menuPos = (menuPos + 1) % menuPageN;
+  menuSel = menuPage[menuPos];
   setBacklightPct(menuSel == MENU_DIMLVL ? DIM_LVL_PCT[editDimLvl]     // preview the dim level
                                          : BRIGHT_PCT[editBright]);
   drawMenu();
