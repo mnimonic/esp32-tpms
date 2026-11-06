@@ -1,6 +1,6 @@
 # ESP-TPMS – To do
 
-Current firmware: **v0.1.2**. Items are grouped by area and roughly ordered by value within each group.
+Current firmware: **v0.1.3**. Items are grouped by area and roughly ordered by value within each group.
 
 ## 1. Verify before riding
 - [ ] **Check pressure readings against a gauge or the phone app** with sensors mounted. The `(raw − 145) / 10` psi formula comes from one source and has only been checked at about 0 psi.

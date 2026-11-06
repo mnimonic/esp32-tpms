@@ -2,6 +2,9 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.3
+- WiFi setup: instead of the green "SAVED" box, a blue "WiFi starting..." box is shown briefly, then the connect screen.
+
 ## 0.1.2
 - "WiFi setup" is now the first menu item (open the menu, click once).
 - Boot splash shortened from 10 s to 3 s (a click still skips it).

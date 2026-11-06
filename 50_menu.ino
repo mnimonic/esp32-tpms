@@ -33,6 +33,7 @@ static uint32_t  menuLastInput = 0;
 
 static void drawMenu();
 static void showMessage(const char* line1, const char* line2, uint16_t bg);
+static void drawMessage(const char* line1, const char* line2, uint16_t bg);
 static void setBacklightPct(int pct);
 static void applyRotation(bool flip);
 static void drawSplash();
@@ -70,7 +71,8 @@ static void openMenu() {
   drawMenu();
 }
 
-static void closeMenu(bool save) {
+// quiet: no SAVED / NOT SAVED screen (WiFi setup shows its own)
+static void closeMenu(bool save, bool quiet) {
   if (save) {
     for (int i = 0; i < NUM_POSITIONS; i++) {
       positions[i].minBar = editMin[i];
@@ -97,13 +99,13 @@ static void closeMenu(bool save) {
                   SCREEN_OFF_S[screenOffIdx]);
     Serial.printf(">> No signal after %u min, max temp %u C (0 = off)\n", STALE_MIN[staleIdx], TMAX_C[tmaxIdx]);
     printPositions();
-    showMessage("SAVED", "", ST77XX_GREEN);
+    if (!quiet) showMessage("SAVED", "", ST77XX_GREEN);
   } else {
     Serial.println(">> Settings menu closed without saving");
     setBacklightPct(BRIGHT_PCT[brightIdx]);          // undo brightness preview
     applyRotation(rotate180);                        // undo rotation preview
     usePsi = savedPsi;                               // undo unit preview
-    showMessage("NOT SAVED", "(timeout)", 0x7BEF);
+    if (!quiet) showMessage("NOT SAVED", "(timeout)", 0x7BEF);
   }
   lastActivity = millis();
   menuActive = false;
@@ -140,8 +142,13 @@ static void factoryReset() {
 
 static void menuClick() {
   menuLastInput = millis();
-  if (menuSel == MENU_SAVE) { closeMenu(true); return; }
-  if (menuSel == MENU_WIFI) { closeMenu(true); wifiStart(); return; }   // keeps the menu changes
+  if (menuSel == MENU_SAVE) { closeMenu(true, false); return; }
+  if (menuSel == MENU_WIFI) {               // keeps the menu changes, no SAVED screen
+    drawMessage("WiFi", "starting...", 0x3B9F);
+    closeMenu(true, true);
+    wifiStart();                             // replaces it with the connect screen
+    return;
+  }
   if (menuSel == MENU_FACTORY) {
     if (!resetArmed) {                 // first click: ask for confirmation
       resetArmed = true;
@@ -242,10 +249,10 @@ static void handleButton() {
     if (menuHold && menuActive && held >= MENU_SAVE_MS) {
       menuHold = false;
       Serial.println(">> Menu: long hold -> save & exit");
-      closeMenu(true);
+      closeMenu(true, false);
     }
   }
 
-  if (menuActive && millis() - menuLastInput > MENU_TIMEOUT_MS) closeMenu(false);
+  if (menuActive && millis() - menuLastInput > MENU_TIMEOUT_MS) closeMenu(false, false);
 }
 

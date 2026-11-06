@@ -550,8 +550,8 @@ static void drawMenu() {
   tft.print(help2);
 }
 
-// Short full-screen message (1.5 s)
-static void showMessage(const char* line1, const char* line2, uint16_t bg) {
+// Full-screen message box (stays until something else is drawn)
+static void drawMessage(const char* line1, const char* line2, uint16_t bg) {
   tft.fillScreen(ST77XX_BLACK);
   tft.fillRect(0, 55, 128, 50, bg);
   tft.setTextColor(ST77XX_BLACK);
@@ -561,6 +561,11 @@ static void showMessage(const char* line1, const char* line2, uint16_t bg) {
   tft.setTextSize(1);
   tft.setCursor((128 - strlen(line2) * 6) / 2, 88);
   tft.print(line2);
+}
+
+// Short full-screen message (1.5 s)
+static void showMessage(const char* line1, const char* line2, uint16_t bg) {
+  drawMessage(line1, line2, bg);
   delay(1500);
 }
 
