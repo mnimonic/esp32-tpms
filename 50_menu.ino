@@ -1,8 +1,9 @@
 // ---------------- Settings menu (MIN/MAX per position) ----------------
-// Items: Pressure unit, Front MIN, Front MAX, Back MIN, Back MAX, Temp unit, ..., Scan, Brightness, Screen off,
-//        RESET PAIRING, SAVE & EXIT
-static const int MENU_PUNIT  = 0;                        // bar / psi (first: MIN/MAX below use this unit)
-static const int MENU_LIM0   = 1;                        // first MIN/MAX item: Front MIN, Front MAX, Back MIN, Back MAX
+// Items: WiFi setup, Pressure unit, Front MIN, Front MAX, Back MIN, Back MAX, Temp unit, ..., Scan, Brightness,
+//        Screen off, RESET PAIRING, SAVE & EXIT
+static const int MENU_WIFI   = 0;                        // first (easy to reach): save menu + start WiFi settings page
+static const int MENU_PUNIT  = 1;                        // bar / psi (before MIN/MAX: they use this unit)
+static const int MENU_LIM0   = 2;                        // first MIN/MAX item: Front MIN, Front MAX, Back MIN, Back MAX
 static const int MENU_TUNIT  = MENU_LIM0 + NUM_POSITIONS * 2;   // C / F
 static const int MENU_TMAX   = MENU_TUNIT + 1;
 static const int MENU_STALE  = MENU_TUNIT + 2;
@@ -15,11 +16,10 @@ static const int MENU_OFF    = MENU_TUNIT + 8;
 static const int MENU_ROT    = MENU_TUNIT + 9;
 static const int MENU_LAYOUT = MENU_TUNIT + 10;
 static const int MENU_COLORS = MENU_TUNIT + 11;
-static const int MENU_WIFI   = MENU_TUNIT + 12;   // action: save menu + start WiFi settings page
-static const int MENU_RESET  = MENU_TUNIT + 13;
-static const int MENU_FACTORY= MENU_TUNIT + 14;
-static const int MENU_SAVE   = MENU_TUNIT + 15;
-static const int MENU_ITEMS  = MENU_TUNIT + 16;
+static const int MENU_RESET  = MENU_TUNIT + 12;
+static const int MENU_FACTORY= MENU_TUNIT + 13;
+static const int MENU_SAVE   = MENU_TUNIT + 14;
+static const int MENU_ITEMS  = MENU_TUNIT + 15;
 static const int MENU_VISIBLE = 11;    // rows that fit on screen; the list scrolls
 static bool      menuActive = false;
 static bool      resetArmed = false;   // RESET PAIRING / FACTORY RESET need a second click to confirm

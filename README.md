@@ -22,7 +22,7 @@ Inspired by [ra6070/BLE-TPMS](https://github.com/ra6070/BLE-TPMS).
 - 4 layouts × 4 colour schemes (Classic / Minimal / Detail / Retro × Dark / Light / Green LCD / Amber)
 - Pairing, limits and unit are kept in flash and survive power loss
 - Power options: CPU at 80 MHz, BLE scan duty cycle, backlight brightness and screen-off timer
-- Boot splash with a logo for 10 s (a click skips it)
+- Boot splash with a logo for 3 s (a click skips it)
 - **WiFi settings page** on your phone (the board becomes a hotspot on demand)
 - Optional **buzzer** for alerts
 - Watchdog: if the program ever hangs, the board restarts by itself within 10 s (the splash then shows "restarted: watchdog"; crashes and low-voltage resets are shown too)
@@ -109,10 +109,10 @@ If you move the TFT pins, change `TFT_SCK`, `TFT_MOSI`, `TFT_CS`, `TFT_DC`, `TFT
 | Settings → RESET PAIRING | Click twice | Forget both sensors (first click asks to confirm, hold cancels) |
 | Settings → FACTORY RESET | Click twice | Erase pairing, limits and all settings, then restart (hold cancels) |
 | Settings → SAVE & EXIT | Click | Save all settings and return |
-| Boot splash | Click | Skip the 10 s splash |
+| Boot splash | Click | Skip the 3 s splash |
 | Screen dimmed / off | Click | Wake the screen only |
 
-The menu closes without saving after 60 s with no button press. The software version is shown in the menu header. The list scrolls (scrollbar on the right) to keep the selected item visible.
+"WiFi setup" is the first menu item, so it is one click after opening the menu. The menu closes without saving after 60 s with no button press. The software version is shown in the menu header. The list scrolls (scrollbar on the right) to keep the selected item visible.
 
 ### Display settings (in the menu)
 
@@ -328,7 +328,7 @@ These constants are at the top of `ESP-TPMS.ino`:
 
 ## Boot logo
 
-The 10 s splash shows a 1-bit logo drawn white on black. The repository ships a neutral TPMS symbol (`logo.h`, made by `tools/make_default_logo.py`). To show your own logo, create `logo_custom.h`:
+The 3 s splash shows a 1-bit logo drawn white on black. The repository ships a neutral TPMS symbol (`logo.h`, made by `tools/make_default_logo.py`). To show your own logo, create `logo_custom.h`:
 
 ```sh
 pip install pillow

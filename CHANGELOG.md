@@ -2,6 +2,10 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.2
+- "WiFi setup" is now the first menu item (open the menu, click once).
+- Boot splash shortened from 10 s to 3 s (a click still skips it).
+
 ## 0.1.1
 - **SD card ride log:** with a card in the TFT module's slot (SD_MISO → GPIO 20, SD_CS → GPIO 21), every ignition-on is logged to `/logs/rideNNNN.csv`: one row per wheel every 10 s, plus every state change (alerts, no signal), low battery and sensor status-byte changes. Oldest rides are deleted when the card gets full. The splash shows the ride number or "no SD card".
 - WiFi page: *Ride logs* section to download the CSV files.
