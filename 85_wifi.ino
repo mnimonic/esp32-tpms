@@ -86,6 +86,7 @@ static void webStatus() {
       jsonInt(j, "batt", p.last.batteryPct);
       jsonInt(j, "rssi", p.last.rssi);
       jsonInt(j, "age", (millis() - p.last.ms) / 1000);
+      jsonBool(j, "old", p.restored);
     }
     j.remove(j.length() - 1);
     j += '}';
@@ -209,7 +210,7 @@ static void webLogFile() {             // /log?f=ride0012.csv -> download
 }
 
 static void webNotFound() {            // any other URL -> settings page
-  web.sendHeader("Location", "/");
+  web.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/");
   web.send(302, "text/plain", "");
 }
 
@@ -263,10 +264,18 @@ static void wifiStart() {
     web.onNotFound(webNotFound);
     routes = true;
   }
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASS);
-  web.begin();
   wifiActive = true;
+  applyScanSettings();                 // BLE down to WIFI_BLE_DUTY
+  WiFi.mode(WIFI_AP);
+  WiFi.setSleep(false);                // AP must answer beacons / probes in time
+  bool ok = WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASS, WIFI_AP_CHANNEL);
+  // The SuperMini's small antenna + LDO: full TX power (19.5 dBm) is known to make
+  // phones fail to associate on these boards. 8.5 dBm is plenty for a phone next to the bike.
+  WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  dns.setErrorReplyCode(DNSReplyCode::NoError);
+  dns.start(53, "*", WiFi.softAPIP());   // every name -> 192.168.4.1 (captive portal)
+  web.begin();
+  if (!ok) Serial.println("!! WiFi: softAP start FAILED (password must be 8+ characters)");
   wifiTouch();
   setScreenState(SCR_ON);
   drawWifiScreen();
@@ -276,9 +285,11 @@ static void wifiStart() {
 static void wifiStop() {
   if (!wifiActive) return;
   web.stop();
+  dns.stop();
   WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_OFF);
   wifiActive = false;
+  applyScanSettings();                 // BLE back to the selected scan duty
   displayDirty = true;
   lastActivity = millis();
   Serial.println(">> WiFi off");
@@ -287,6 +298,7 @@ static void wifiStop() {
 // Called from loop()
 static void wifiLoop() {
   if (!wifiActive) return;
+  dns.processNextRequest();
   web.handleClient();
   drawWifiClients(false);
   if (WiFi.softAPgetStationNum() > 0) {

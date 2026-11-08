@@ -2,6 +2,11 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.6
+- **Last reading is kept:** each wheel's last value is stored in flash and shown after power-on in the dim colour with "last ride" (Minimal/Retro: "old") instead of the age, until the sensor sends again. LOW/HIGH colours still apply, but there is no blink, buzz, HOT or NO SIGNAL for a stored value. Saved on the first reading of a ride, then at most every 5 min when pressure (±0.05 bar) or temperature (±3 °C) changed.
+- **Screen stays on after power-on** until every paired wheel has sent fresh data (max 5 min), so "Dim after" no longer kicks in before the sensors wake up.
+- **WiFi fix:** TX power lowered to 8.5 dBm (the SuperMini antenna fails to let phones join at full power), modem sleep off, fixed channel 6, BLE scan limited to 20 % while the hotspot is on (one shared radio), plus a captive portal (DNS) so the phone opens the page by itself and keeps the connection.
+
 ## 0.1.5
 - **Submenus:** "Display >" holds Brightness, Dim after, Dim level, Screen off, Rotate, Layout and Colors; the main list is shorter.
 - **SD card submenu:** shows card size, free space and the current log; *Delete all logs* and *Format card* (both need a second click). Opening it also detects a card inserted after start-up.

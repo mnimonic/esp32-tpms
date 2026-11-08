@@ -6,6 +6,8 @@ static void loadPositions() {
   for (int i = 0; i < NUM_POSITIONS; i++) {
     positions[i].addr = prefs.getString(prefKey(i).c_str(), "");
     positions[i].hasReading = false;
+    positions[i].restored   = false;
+    if (positions[i].addr.length()) loadLastReading(i);
     positions[i].minBar = prefs.getFloat(("min" + String(i)).c_str(), DEFAULT_MIN_BAR);
     positions[i].maxBar = prefs.getFloat(("max" + String(i)).c_str(), DEFAULT_MAX_BAR);
   }
@@ -48,9 +50,47 @@ static void saveLimits() {
   prefs.end();
 }
 
+// ---- Last reading per wheel (shown after power-on until the sensor sends again) ----
+struct StoredReading { float psi, tempC, volts; int16_t batteryPct; uint8_t status; char type[5]; };
+static String lastKey(int i) { return "last" + String(i); }
+
+// Called inside loadPositions (prefs already open)
+static void loadLastReading(int i) {
+  StoredReading s;
+  if (prefs.getBytesLength(lastKey(i).c_str()) != sizeof(s)) return;
+  prefs.getBytes(lastKey(i).c_str(), &s, sizeof(s));
+  Reading& r = positions[i].last;
+  memset(&r, 0, sizeof(r));
+  strlcpy(r.addr, positions[i].addr.c_str(), sizeof(r.addr));
+  strlcpy(r.type, s.type, sizeof(r.type));
+  r.psi = s.psi; r.tempC = s.tempC; r.volts = s.volts; r.batteryPct = s.batteryPct;
+  r.status = s.status; r.rssi = 0; r.ms = 0;
+  positions[i].hasReading = true;
+  positions[i].restored   = true;
+}
+
+// Called for every fresh (non-repeat) reading of a paired sensor
+static void maybeSaveLastReading(int i, const Reading& r) {
+  static uint32_t savedMs[NUM_POSITIONS] = {0};
+  static float    savedBar[NUM_POSITIONS], savedC[NUM_POSITIONS];
+  float bar = r.psi * 0.0689476f;
+  if (savedMs[i]) {
+    if (millis() - savedMs[i] < LAST_SAVE_MS) return;
+    if (fabsf(bar - savedBar[i]) < LAST_SAVE_BAR && fabsf(r.tempC - savedC[i]) < LAST_SAVE_C) return;
+  }
+  StoredReading s = { r.psi, r.tempC, r.volts, (int16_t)r.batteryPct, r.status, {0} };
+  strlcpy(s.type, r.type, sizeof(s.type));
+  prefs.begin("tpms", false);
+  prefs.putBytes(lastKey(i).c_str(), &s, sizeof(s));
+  prefs.end();
+  savedMs[i] = millis() | 1; savedBar[i] = bar; savedC[i] = r.tempC;
+  if (TPMS_DEBUG) Serial.printf(">> %s: last reading saved (%.2f bar, %.0f C)\n", POSITION_NAMES[i], bar, r.tempC);
+}
+
 static void savePosition(int i) {
   prefs.begin("tpms", false);
   prefs.putString(prefKey(i).c_str(), positions[i].addr);
+  if (!positions[i].addr.length()) prefs.remove(lastKey(i).c_str());   // pairing cleared
   prefs.end();
 }
 
@@ -68,8 +108,11 @@ static void printPositions() {
     Serial.print(positions[i].addr);
     if (positions[i].hasReading) {
       const Reading& r = positions[i].last;
-      Serial.printf("  %.2f bar / %.1f psi  %.0f C  (%lu s ago)\n",
-                    r.psi * 0.0689476f, r.psi, r.tempC, (millis() - r.ms) / 1000);
+      if (positions[i].restored)
+        Serial.printf("  %.2f bar / %.1f psi  %.0f C  (last ride)\n", r.psi * 0.0689476f, r.psi, r.tempC);
+      else
+        Serial.printf("  %.2f bar / %.1f psi  %.0f C  (%lu s ago)\n",
+                      r.psi * 0.0689476f, r.psi, r.tempC, (millis() - r.ms) / 1000);
     } else {
       Serial.println("  (no reading yet)");
     }

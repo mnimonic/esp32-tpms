@@ -8,6 +8,10 @@ static PosState positionState(int i) {
   const Position& p = positions[i];
   if (!p.addr.length()) return PS_EMPTY;
   if (!p.hasReading)    return PS_WAIT;
+  if (p.restored) {                            // previous ride: only LOW / HIGH, no timeout / HOT / DROP
+    float bar = p.last.psi * 0.0689476f;
+    return bar < p.minBar ? PS_LOW : bar > p.maxBar ? PS_HIGH : PS_OK;
+  }
   if (millis() - p.last.ms > (uint32_t)STALE_MIN[staleIdx] * 60000UL) return PS_OLD;
   if (hist[i].dropping) return PS_DROP;        // rapid loss has priority over everything
   if (TMAX_C[tmaxIdx] && p.last.tempC > TMAX_C[tmaxIdx]) return PS_HOT;   // then high temperature
@@ -77,8 +81,11 @@ static void drawInfoLine(int i) {
   if (!p.hasReading || !p.addr.length()) return;
   const Reading& r = p.last;
   const int y = i * 80;
-  char age[8], bat[8], line[32];
+  char age[12], bat[8], line[32];
   fmtAge(r.ms, age, sizeof(age));
+  // Previous ride: "last ride" instead of the age (Minimal / Retro have less room: "old")
+  if (p.restored) strlcpy(age, (L() == LAY_RETRO || L() == LAY_MINIMAL) ? "old" : "last ride", sizeof(age));
+  const char* ago = p.restored ? "" : " ago";
   fmtBattery(r, bat, sizeof(bat));
   bool  lowBat = isLowBattery(r);
   float t = dispTemp(r.tempC);
@@ -89,13 +96,14 @@ static void drawInfoLine(int i) {
   switch (L()) {
     case LAY_MINIMAL:
       if (lowBat) snprintf(line, sizeof(line), "%.0f%c  %s LOW  %s", t, tu, bat, age);
-      else        snprintf(line, sizeof(line), "%.0f%c  %s  %s ago", t, tu, bat, age);
+      else        snprintf(line, sizeof(line), "%.0f%c  %s  %s%s", t, tu, bat, age, ago);
       x = 8; yy = y + 62; width = 19;
       if (!lowBat) color = T().dim;
       break;
     case LAY_DETAIL:
-      snprintf(line, sizeof(line), "RSSI %d   %s ago", r.rssi, age);
-      yy = y + 68; color = T().dim;
+      if (p.restored) snprintf(line, sizeof(line), "%s", age);
+      else            snprintf(line, sizeof(line), "RSSI %d   %s ago", r.rssi, age);
+      yy = y + 68; color = p.restored ? T().warn : T().dim;
       break;
     case LAY_RETRO:
       if (lowBat) snprintf(line, sizeof(line), "%.0f%c %s LOW %s", t, tu, bat, age);
@@ -104,7 +112,7 @@ static void drawInfoLine(int i) {
       break;
     default:   // Classic: battery is in the header
       if (lowBat) snprintf(line, sizeof(line), "%.0f%c  LOW BAT  %s", t, tu, age);
-      else        snprintf(line, sizeof(line), "%.0f%c  %s ago", t, tu, age);
+      else        snprintf(line, sizeof(line), "%.0f%c  %s%s", t, tu, age, ago);
       break;
   }
   char padded[32];
@@ -139,7 +147,7 @@ static void updateAlerts() {
   static PosState alertKind[NUM_POSITIONS];
   for (int i = 0; i < NUM_POSITIONS; i++) {
     PosState st = positionState(i);
-    bool alert = isAlertState(st);
+    bool alert = isAlertState(st) && !positions[i].restored;   // last-ride values: colour only, no blink / buzz
     // A new alert, or a change of kind (e.g. LOW -> DROPPING), starts a new blink period
     if (alert && (!alertSince[i] || st != alertKind[i])) {
       alertSince[i] = millis() | 1;
@@ -158,7 +166,7 @@ static bool isBlinking(int i) {
 
 // A reading older than AGED_MS (sensor quiet, e.g. standing still)
 static bool isAged(int i) {
-  return positions[i].hasReading && millis() - positions[i].last.ms > AGED_MS;
+  return positions[i].hasReading && (positions[i].restored || millis() - positions[i].last.ms > AGED_MS);
 }
 
 // Colour of the big number + unit: alerts keep their colour, an old OK value turns grey
@@ -416,6 +424,8 @@ static void updateDisplay() {
       msChanged = (ms == 0) != (drawnMs[i] == 0) || (ms && ms - drawnMs[i] > BURST_DEDUP_MS);
     }
     bool aged = isAged(i);
+    static bool drawnRestored[NUM_POSITIONS];
+    if (positions[i].restored != drawnRestored[i]) { msChanged = true; drawnRestored[i] = positions[i].restored; }
     if (first || st != drawnState[i] || msChanged || positions[i].addr != drawnAddr[i] || aged != drawnAged[i]) {
       drawPosition(i);
       numHidden[i]  = false;

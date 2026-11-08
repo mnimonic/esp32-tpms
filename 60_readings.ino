@@ -30,13 +30,18 @@ static void processReadings() {
     haveLastDetected = true;
 
     int pos = findPosition(r.addr);
-    if (pos >= 0) { positions[pos].last = r; positions[pos].hasReading = true; }
+    if (pos >= 0) {
+      if (positions[pos].restored)
+        Serial.printf(">> %s: first fresh reading this ride\n", POSITION_NAMES[pos]);
+      positions[pos].last = r; positions[pos].hasReading = true; positions[pos].restored = false;
+    }
 
     if (TPMS_DEBUG && !repeat) printReading(r, pos);
 
     if (pos >= 0 && !repeat) {
       addPressureSample(pos, r.psi * 0.0689476f, r.ms);
       logReading(pos, r);
+      maybeSaveLastReading(pos, r);
       if (isLowBattery(r) && !lowBattWarned[pos]) {
         lowBattWarned[pos] = true;
         Serial.printf("!! %s sensor battery LOW (%.1f V)\n", POSITION_NAMES[pos], r.volts);

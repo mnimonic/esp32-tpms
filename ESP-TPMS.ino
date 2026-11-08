@@ -29,6 +29,7 @@
 #include <esp_task_wdt.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <DNSServer.h>         // captive portal: phones open the page by themselves and keep the connection
 #include "web_page.h"         // settings page HTML
 #include <esp_system.h>
 
@@ -56,7 +57,7 @@ static bool     splashActive = false;
 static uint32_t splashStart  = 0;
 
 // ---------------- Version ----------------
-#define FW_VERSION "0.1.5"     // shown in the settings menu, on the start screen and in the serial log
+#define FW_VERSION "0.1.6"     // shown in the settings menu, on the start screen and in the serial log
 
 // Verbose serial output (every reading, 30 s status, screen dim/off). 0 = release.
 // Can also be set when building: --build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1
@@ -85,6 +86,15 @@ static const float    DEFAULT_MIN_BAR = 2.0f;
 static const float    DEFAULT_MAX_BAR = 3.0f;
 static const float    LIMIT_RANGE_MIN = 1.0f;   // lowest value selectable in the menu
 static const float    LIMIT_RANGE_MAX = 4.5f;   // highest value selectable in the menu
+// Last reading per wheel is kept in flash, so the previous value is shown (marked "last ride")
+// until the sensor sends again. Saved on the first fresh reading of a ride, then at most every
+// LAST_SAVE_MS when pressure / temperature changed noticeably (flash wear).
+static const uint32_t LAST_SAVE_MS      = 5UL * 60UL * 1000UL;
+static const float    LAST_SAVE_BAR     = 0.05f;
+static const float    LAST_SAVE_C       = 3.0f;
+// After power-on the dim/off timers wait until every paired wheel sent fresh data
+// (sensors sleep while the bike stands still), at most WAIT_KEEP_ON_MS.
+static const uint32_t WAIT_KEEP_ON_MS   = 5UL * 60UL * 1000UL;
 static const uint32_t AGED_MS        = 2UL * 60UL * 1000UL; // OK number turns grey when older than this
 static const uint32_t BLINK_MS       = 500;                 // out-of-range number blinks with this half-period
 static const uint32_t ALERT_BLINK_MS = 5UL * 60UL * 1000UL; // ...for this long after the alert starts
@@ -181,6 +191,7 @@ struct Position {
   String  addr;           // empty = not assigned
   Reading last;
   bool    hasReading;
+  bool    restored;       // `last` is the stored reading from the previous ride (no fresh data yet)
   float   minBar;         // below = red
   float   maxBar;         // above = blue
 };
@@ -235,11 +246,18 @@ static int         buzzIdx  = BUZZ_ALERTS;        // menu: Buzzer
 #ifndef WIFI_AP_SSID
 #define WIFI_AP_SSID "ESP-TPMS"
 #endif
+#ifndef WIFI_AP_CHANNEL
+#define WIFI_AP_CHANNEL 6
+#endif
 #ifndef WIFI_AP_PASS
 #define WIFI_AP_PASS "tpms1234"          // at least 8 characters
 #endif
 static const uint32_t WIFI_IDLE_OFF_MS = 10UL * 60UL * 1000UL;   // WiFi off after 10 min without page use
 static WebServer web(80);
+static DNSServer dns;
+// The C3 has one radio for BLE + WiFi. While the hotspot is on, BLE listens at most this
+// share of the time so WiFi gets airtime (at 50-100 % phones failed to join).
+static const uint8_t WIFI_BLE_DUTY = 20;
 static bool      wifiActive  = false;
 static uint32_t  wifiLastUse = 0;
 

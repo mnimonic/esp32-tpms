@@ -111,7 +111,7 @@ async function status(){try{const s=await (await fetch('/api/status')).json();
   const t=s.degf?Math.round(p.temp*1.8+32)+'°F':Math.round(p.temp)+'°C';
   const b=p.volts>=0?p.volts.toFixed(1)+' V':(p.batt>=0?p.batt+' %':'');
   return '<div class="card" style="border-color:'+(COL[p.state]||'#666')+'"><b>'+p.name+'</b> <small>'+p.state+'</small>'+
-   '<div class="p">'+v+' <small>'+(s.psi?'psi':'bar')+'</small></div><small>'+t+' · '+b+' · '+p.age+' s ago</small></div>';}).join('');
+   '<div class="p">'+v+' <small>'+(s.psi?'psi':'bar')+'</small></div><small>'+t+' · '+b+' · '+(p.old?'last ride':p.age+' s ago')+'</small></div>';}).join('');
  }catch(x){}}
 async function logs(){try{const l=await (await fetch('/api/logs')).json();
  if(!l.sd){$('#logs').innerHTML='<small>No SD card</small>';return;}

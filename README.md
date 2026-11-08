@@ -161,7 +161,7 @@ Opening "SD card >" also picks up a card that was inserted after start-up. The m
 |---|---|---|
 | Scan | 100 / 50 / 30 / 20 % | Share of time the BLE receiver listens (100 ms interval). Lower uses less power but may miss a sensor burst |
 | Brightness | 100 / 75 / 50 / 25 % | Backlight brightness (needs BL on GPIO 1) |
-| Dim after | Never / 10 s / 30 s / 1 m | Stage 1: backlight drops to the dim level after this idle time (still readable) |
+| Dim after | Never / 10 s / 30 s / 1 m | Stage 1: backlight drops to the dim level after this idle time (still readable). After power-on the screen stays on until every paired wheel has sent fresh data (max 5 min) |
 | Dim level | 1 / 2 / 5 / 10 / 15 / 20 / 25 % | Brightness while dimmed. The screen previews it while this item is selected |
 | Screen off | Never / 30 s / 1 m / 5 m | Stage 2: backlight off and the display controller goes to sleep |
 
@@ -192,7 +192,7 @@ The main screen has two independent settings, so any layout works with any colou
 Change every setting from your phone instead of the button:
 
 1. **Menu → WiFi setup → click.** Changes made in the menu are saved, then the board starts a WiFi hotspot and the screen shows how to connect.
-2. On the phone, join the WiFi network **`ESP-TPMS`** (password **`tpms1234`**) and open **http://192.168.4.1**.
+2. On the phone, join the WiFi network **`ESP-TPMS`** (password **`tpms1234`**). The page usually opens by itself ("sign in to network"); otherwise open **http://192.168.4.1**. If the phone warns "no internet", choose to stay connected.
 3. The page shows live cards for both wheels (updated every 2 s) and all settings: units, MIN/MAX, alarms, buzzer, layout, colours, brightness, dim, screen-off and BLE scan. Tap **Save settings**. Reset pairing and factory reset are there too (with confirmation).
 4. **Click the button** to switch WiFi off. It also switches off by itself after 10 minutes without the page being used. BLE keeps receiving the whole time.
 
@@ -249,7 +249,7 @@ Wake only one sensor at a time so the right one is stored.
 | Magenta "HOT!" | Tyre temperature above "Max temp" (number blinks) |
 | Yellow box around the voltage + "LOW BAT" | Sensor battery below 2.7 V (or 20 %) |
 | Orange | No signal for the "No signal" time (default 15 minutes) |
-| Grey | Not paired / waiting for the first reading. A grey **number** means the last reading is older than 2 minutes (sensor quiet) |
+| Grey | Not paired / waiting for the first reading. A grey **number** means the last reading is older than 2 minutes (sensor quiet). After power-on the value from the **last ride** is shown grey with "last ride" (or "old") until the sensor sends again |
 | Yellow | Unpaired sensor found, click to store |
 
 The sensors sleep when they are not moving and only broadcast occasionally, so a reading that is a few minutes old is normal when parked.

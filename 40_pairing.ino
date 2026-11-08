@@ -15,6 +15,7 @@ static void storeLastDetected() {
       positions[i].addr       = lastDetected.addr;
       positions[i].last       = lastDetected;
       positions[i].hasReading = true;
+      positions[i].restored   = false;
       savePosition(i);
       resetHistory(i);
       Serial.printf(">> Button: stored %s as %s.\n", lastDetected.addr, POSITION_NAMES[i]);
@@ -54,6 +55,7 @@ static void clearPositions() {
   for (int i = 0; i < NUM_POSITIONS; i++) {
     positions[i].addr = "";
     positions[i].hasReading = false;
+    positions[i].restored   = false;
     savePosition(i);
     resetHistory(i);
   }

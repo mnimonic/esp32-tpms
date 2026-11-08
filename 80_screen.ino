@@ -33,6 +33,12 @@ static void manageScreen() {
   // Splash, menu open or an unpaired sensor waiting to be stored: keep the screen on
   bool attention = splashActive || menuActive || wifiActive || (nextFreePosition() >= 0 && haveCandidate());
 
+  // After power-on: stay on until every paired wheel sent fresh data (max WAIT_KEEP_ON_MS)
+  if (millis() < WAIT_KEEP_ON_MS) {
+    for (int i = 0; i < NUM_POSITIONS; i++)
+      if (positions[i].addr.length() && (!positions[i].hasReading || positions[i].restored)) attention = true;
+  }
+
   // Alerts (a wheel red/blue):
   //  - wake the screen when they start,
   //  - while the number blinks (first 5 min) the dim stage is skipped,

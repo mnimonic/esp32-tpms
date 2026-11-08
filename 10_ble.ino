@@ -63,9 +63,11 @@ static void applyScanSettings() {
   scanReconfig = true;
   if (scan->isScanning()) scan->stop();
   scan->setInterval(100);
-  scan->setWindow(SCAN_DUTY[scanIdx]);
+  uint8_t duty = SCAN_DUTY[scanIdx];
+  if (wifiActive && duty > WIFI_BLE_DUTY) duty = WIFI_BLE_DUTY;   // leave airtime for WiFi
+  scan->setWindow(duty);
   scan->start(0, false, true);
   scanReconfig = false;
-  if (TPMS_DEBUG) Serial.printf(">> BLE scan: listening %u%% of the time\n", SCAN_DUTY[scanIdx]);
+  if (TPMS_DEBUG) Serial.printf(">> BLE scan: listening %u%% of the time\n", duty);
 }
 
