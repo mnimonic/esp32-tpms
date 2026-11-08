@@ -161,9 +161,9 @@ Opening "SD card >" also picks up a card that was inserted after start-up. The m
 |---|---|---|
 | Scan | 100 / 50 / 30 / 20 % | Share of time the BLE receiver listens (100 ms interval). Lower uses less power but may miss a sensor burst |
 | Brightness | 100 / 75 / 50 / 25 % | Backlight brightness (needs BL on GPIO 1) |
-| Dim after | Never / 10 s / 30 s / 1 m | Stage 1: backlight drops to the dim level after this idle time (still readable). After power-on the screen stays on until every paired wheel has sent fresh data (max 5 min) |
+| Dim after | Never / 10 s / 30 s / 1 m / 5 m / 10 m / 30 m | Stage 1: backlight drops to the dim level after this idle time (still readable). After power-on the screen stays on until every paired wheel has sent fresh data (max 5 min) |
 | Dim level | 1 / 2 / 5 / 10 / 15 / 20 / 25 % | Brightness while dimmed. The screen previews it while this item is selected |
-| Screen off | Never / 30 s / 1 m / 5 m | Stage 2: backlight off and the display controller goes to sleep |
+| Screen off | Never / 30 s / 1 m / 5 m / 10 m / 30 m / 60 m | Stage 2: backlight off and the display controller goes to sleep |
 
 "Idle" means no button press **and no new data from your paired sensors** (sensors on other vehicles nearby are ignored), so while riding (sensors report every few seconds) the screen stays on, and it dims and turns off when parked. A tyre going out of range wakes the screen; its pressure number then blinks for 5 minutes, and during that time the dim stage is skipped. After 5 minutes the number stays solid red/blue and dimming works again. "Screen off" always applies. A new sensor found while pairing keeps the screen on.
 

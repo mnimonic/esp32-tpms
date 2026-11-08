@@ -288,9 +288,9 @@ static void menuClick() {
   }
   if      (menuSel == MENU_SCAN)   editScan = (editScan + 1) % NUM_OPTS;
   else if (menuSel == MENU_BRIGHT) { editBright = (editBright + 1) % NUM_OPTS; setBacklightPct(BRIGHT_PCT[editBright]); }
-  else if (menuSel == MENU_DIM)    editDim = (editDim + 1) % NUM_OPTS;
+  else if (menuSel == MENU_DIM)    editDim = (editDim + 1) % NUM_DIM;
   else if (menuSel == MENU_DIMLVL) { editDimLvl = (editDimLvl + 1) % NUM_DIM_LVLS; setBacklightPct(DIM_LVL_PCT[editDimLvl]); }  // preview
-  else if (menuSel == MENU_OFF)    editOff = (editOff + 1) % NUM_OPTS;
+  else if (menuSel == MENU_OFF)    editOff = (editOff + 1) % NUM_OFF;
   else if (menuSel == MENU_STALE)  editStale = (editStale + 1) % NUM_STALE;
   else if (menuSel == MENU_TMAX)   editTmax = (editTmax + 1) % NUM_TMAX;
   else if (menuSel == MENU_BUZZ)   { editBuzz = (editBuzz + 1) % NUM_BUZZ;          // test beep

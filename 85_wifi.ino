@@ -56,9 +56,9 @@ static void webConfig() {
   for (int i = 0; i < NUM_PALETTES; i++) { if (i) j += ','; j += '"'; j += PALETTES[i].name; j += '"'; }
   j += "],";
   jsonInt(j, "bright", brightIdx);   jsonArr(j, "brightOpts", BRIGHT_PCT, NUM_OPTS);
-  jsonInt(j, "dim", dimIdx);         jsonArr16(j, "dimOpts", DIM_S, NUM_OPTS);
+  jsonInt(j, "dim", dimIdx);         jsonArr16(j, "dimOpts", DIM_S, NUM_DIM);
   jsonInt(j, "diml", dimLvlIdx);     jsonArr(j, "dimlOpts", DIM_LVL_PCT, NUM_DIM_LVLS);
-  jsonInt(j, "off", screenOffIdx);   jsonArr16(j, "offOpts", SCREEN_OFF_S, NUM_OPTS);
+  jsonInt(j, "off", screenOffIdx);   jsonArr16(j, "offOpts", SCREEN_OFF_S, NUM_OFF);
   jsonInt(j, "scan", scanIdx);       jsonArr(j, "scanOpts", SCAN_DUTY, NUM_OPTS);
   j.remove(j.length() - 1);          // trailing comma
   j += '}';
@@ -132,9 +132,9 @@ static void webSettings() {
   layoutIdx     = argIdx("layout", NUM_LAYOUTS, layoutIdx);
   paletteIdx    = argIdx("colors", NUM_PALETTES, paletteIdx);
   brightIdx     = argIdx("bright", NUM_OPTS, brightIdx);
-  dimIdx        = argIdx("dim", NUM_OPTS, dimIdx);
+  dimIdx        = argIdx("dim", NUM_DIM, dimIdx);
   dimLvlIdx     = argIdx("diml", NUM_DIM_LVLS, dimLvlIdx);
-  screenOffIdx  = argIdx("off", NUM_OPTS, screenOffIdx);
+  screenOffIdx  = argIdx("off", NUM_OFF, screenOffIdx);
   scanIdx       = argIdx("scan", NUM_OPTS, scanIdx);
 
   saveLimits();

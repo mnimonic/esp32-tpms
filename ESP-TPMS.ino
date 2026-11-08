@@ -57,7 +57,7 @@ static bool     splashActive = false;
 static uint32_t splashStart  = 0;
 
 // ---------------- Version ----------------
-#define FW_VERSION "0.1.6"     // shown in the settings menu, on the start screen and in the serial log
+#define FW_VERSION "0.1.7"     // shown in the settings menu, on the start screen and in the serial log
 
 // Verbose serial output (every reading, 30 s status, screen dim/off). 0 = release.
 // Can also be set when building: --build-property compiler.cpp.extra_flags=-DTPMS_DEBUG=1
@@ -134,11 +134,13 @@ static const uint32_t CPU_MHZ          = 80;     // 80 MHz is the minimum for BL
 static const int      NUM_OPTS               = 4;
 static const uint8_t  SCAN_DUTY[NUM_OPTS]    = {100, 50, 30, 20};  // % of time the BLE receiver listens
 static const uint8_t  BRIGHT_PCT[NUM_OPTS]   = {100, 75, 50, 25};  // backlight brightness
-static const uint16_t DIM_S[NUM_OPTS]        = {0, 10, 30, 60};    // stage 1: backlight to dim level after idle (0 = never)
+static const int      NUM_DIM                = 7;
+static const uint16_t DIM_S[NUM_DIM]         = {0, 10, 30, 60, 300, 600, 1800};   // stage 1: backlight to dim level after idle (0 = never)
 static const int      NUM_DIM_LVLS           = 7;
 static const uint8_t  DIM_LVL_PCT[NUM_DIM_LVLS] = {1, 2, 5, 10, 15, 20, 25};  // dimmed brightness choices
 static const int      DEFAULT_DIM_LVL_IDX    = 2;                  // 5 %
-static const uint16_t SCREEN_OFF_S[NUM_OPTS] = {0, 30, 60, 300};   // stage 2: display sleep after idle (0 = never)
+static const int      NUM_OFF                = 7;
+static const uint16_t SCREEN_OFF_S[NUM_OFF]  = {0, 30, 60, 300, 600, 1800, 3600};   // stage 2: display sleep after idle (0 = never)
 static const int      DEFAULT_SCAN_IDX = 1, DEFAULT_BRIGHT_IDX = 0, DEFAULT_DIM_IDX = 0, DEFAULT_OFF_IDX = 0;
 // "Idle" = no button press, no alert and no new sensor data.
 

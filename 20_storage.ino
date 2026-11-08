@@ -14,7 +14,7 @@ static void loadPositions() {
   usePsi       = prefs.getBool("psi", false);
   scanIdx      = prefs.getUChar("scan", DEFAULT_SCAN_IDX)   % NUM_OPTS;
   brightIdx    = prefs.getUChar("bri",  DEFAULT_BRIGHT_IDX) % NUM_OPTS;
-  dimIdx       = prefs.getUChar("dim",  DEFAULT_DIM_IDX)    % NUM_OPTS;
+  dimIdx       = prefs.getUChar("dim",  DEFAULT_DIM_IDX)    % NUM_DIM;
   dimLvlIdx    = prefs.getUChar("diml", DEFAULT_DIM_LVL_IDX) % NUM_DIM_LVLS;
   staleIdx     = prefs.getUChar("stale", DEFAULT_STALE_IDX) % NUM_STALE;
   tmaxIdx      = prefs.getUChar("tmax", DEFAULT_TMAX_IDX)   % NUM_TMAX;
@@ -23,7 +23,7 @@ static void loadPositions() {
   rotate180     = prefs.getBool("rot", false);
   layoutIdx     = prefs.getUChar("layout", 0) % NUM_LAYOUTS;
   paletteIdx    = prefs.getUChar("colors", 0) % NUM_PALETTES;
-  screenOffIdx = prefs.getUChar("off",  DEFAULT_OFF_IDX)    % NUM_OPTS;
+  screenOffIdx = prefs.getUChar("off",  DEFAULT_OFF_IDX)    % NUM_OFF;
   prefs.end();
 }
 

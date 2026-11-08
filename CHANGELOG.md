@@ -2,6 +2,9 @@
 
 All notable changes to ESP-TPMS. Versions match `FW_VERSION` in the sketch, which is shown in the settings menu, on the start screen and in the serial log.
 
+## 0.1.7
+- "Dim after" has new options: 5, 10 and 30 minutes; "Screen off" adds 10, 30 and 60 minutes (menu and WiFi page).
+
 ## 0.1.6
 - **Last reading is kept:** each wheel's last value is stored in flash and shown after power-on in the dim colour with "last ride" (Minimal/Retro: "old") instead of the age, until the sensor sends again. LOW/HIGH colours still apply, but there is no blink, buzz, HOT or NO SIGNAL for a stored value. Saved on the first reading of a ride, then at most every 5 min when pressure (±0.05 bar) or temperature (±3 °C) changed.
 - **Screen stays on after power-on** until every paired wheel has sent fresh data (max 5 min), so "Dim after" no longer kicks in before the sensors wake up.
