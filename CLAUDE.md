@@ -13,6 +13,7 @@ Other files: `README.md` (user docs, wiring – keep in sync when pins, buttons 
 - Bundled CLI: `%LOCALAPPDATA%\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe`
 - `arduino-cli compile --upload -p COM6 -b "esp32:esp32:esp32c3:CDCOnBoot=cdc,PartitionScheme=min_spiffs" C:\Projects\ESP-TPMS`
 - **PartitionScheme=min_spiffs is required** since v0.1.0 (WiFi → 1.34 MB; default app partition is 1.31 MB). NVS offset is the same, settings survive. Keep CI (`.github/workflows/build.yml`) in sync.
+- After a debug build, the release build once flashed a **stale cached binary** (banner showed the old version): always check the banner version, rebuild with `--clean` if it is wrong.
 - **CDCOnBoot=cdc is required** – without it Serial goes to the UART pins and the monitor is silent.
 - Read serial from PowerShell with `System.IO.Ports.SerialPort` on COM6 (`DtrEnable = $true`). "Access denied" = Arduino IDE serial monitor is open; "does not exist" = board unplugged. COM3/COM4 are Bluetooth ports.
 - When editing the .ino from PowerShell, write UTF-8 **without BOM** (`[IO.File]::WriteAllText(..., New UTF8Encoding($false))`).
